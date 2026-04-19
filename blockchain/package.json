@@ -1,0 +1,35 @@
+{
+  "name": "aurea-blockchain",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Smart contracts de Aurea - Solidity + Hardhat (AureaCert)",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "node": "hardhat node",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
+    "clean": "hardhat clean"
+  },
+  "keywords": [
+    "aurea",
+    "solidity",
+    "hardhat",
+    "ethereum",
+    "nft",
+    "certificados"
+  ],
+  "author": "Elena",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.6",
+    "dotenv": "^16.4.5"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

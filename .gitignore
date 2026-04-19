@@ -1,0 +1,99 @@
+# ============================================================
+# Aurea — .gitignore (Node.js + React + React Native + Hardhat)
+# ============================================================
+
+# ---------- Node.js ----------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-store/
+
+# ---------- Variables de entorno ----------
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+.env.*.local
+!.env.example
+
+# ---------- Builds / Outputs ----------
+dist/
+build/
+out/
+.next/
+.nuxt/
+coverage/
+*.tsbuildinfo
+
+# ---------- React / Vite ----------
+.vite/
+.cache/
+.parcel-cache/
+
+# ---------- React Native / Expo ----------
+.expo/
+.expo-shared/
+*.jsbundle
+ios/Pods/
+ios/build/
+ios/DerivedData/
+ios/*.xcworkspace/xcuserdata/
+android/.gradle/
+android/build/
+android/app/build/
+android/app/release/
+android/local.properties
+*.hprof
+*.keystore
+!debug.keystore
+
+# ---------- Hardhat / Blockchain ----------
+artifacts/
+cache/
+typechain/
+typechain-types/
+deployments/
+.openzeppelin/
+
+# ---------- IDEs y editores ----------
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+
+# ---------- Sistema operativo ----------
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ---------- Logs ----------
+logs/
+*.log
+
+# ---------- Uploads / temporales ----------
+uploads/
+tmp/
+temp/
+
+# ---------- Tests ----------
+.nyc_output/
+coverage/
+
+# ---------- Secretos ----------
+*.pem
+*.key
+*.p12
+secrets.json
