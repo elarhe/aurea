@@ -1,0 +1,107 @@
+erDiagram
+    USER ||--o{ ADDRESS : "tiene"
+    USER ||--o| CART : "posee"
+    USER ||--o{ ORDER : "realiza"
+    USER ||--o{ REVIEW : "escribe"
+    USER }o--o{ PRODUCT : "wishlist"
+
+    EMPLOYEE ||--o{ ORDER : "gestiona"
+
+    CATEGORY ||--o{ CATEGORY : "padre/hijo"
+    CATEGORY ||--o{ PRODUCT : "agrupa"
+
+    PRODUCT ||--o{ REVIEW : "recibe"
+    PRODUCT ||--o{ CART_ITEM : "está en"
+    PRODUCT ||--o{ ORDER_ITEM : "se vende como"
+    PRODUCT ||--o{ CERTIFICATE : "se certifica"
+
+    CART ||--o{ CART_ITEM : "contiene"
+
+    ORDER ||--o{ ORDER_ITEM : "contiene"
+    ORDER ||--o{ CERTIFICATE : "emite"
+    ORDER }o--o| COUPON : "aplica"
+
+    USER {
+      ObjectId _id
+      string firstName
+      string lastName
+      string email "unique"
+      string password "bcrypt"
+      string walletAddress
+      bool emailVerified
+    }
+    EMPLOYEE {
+      ObjectId _id
+      string email "unique"
+      string role "admin|manager|staff"
+      string department
+    }
+    ADDRESS {
+      ObjectId _id
+      string recipient
+      string line1
+      string city
+      string postalCode
+      string country
+      bool isDefault
+    }
+    CATEGORY {
+      ObjectId _id
+      string name
+      string slug "unique"
+      ObjectId parent
+    }
+    PRODUCT {
+      ObjectId _id
+      string name
+      string slug "unique"
+      number price
+      number stock
+      bool certifiable
+      bool isActive
+    }
+    CART {
+      ObjectId _id
+      ObjectId user "unique"
+      number subtotal
+    }
+    CART_ITEM {
+      ObjectId _id
+      string variantSku
+      number quantity
+      number unitPrice
+    }
+    ORDER {
+      ObjectId _id
+      string orderNumber "unique"
+      string status
+      number total
+      bool certificatesIssued
+    }
+    ORDER_ITEM {
+      ObjectId _id
+      string sku
+      number quantity
+      number unitPrice
+    }
+    CERTIFICATE {
+      ObjectId _id
+      number certificateId "unique"
+      string serialNumber "unique"
+      string transactionHash
+      string status
+    }
+    REVIEW {
+      ObjectId _id
+      number rating
+      string title
+      string comment
+      bool verifiedPurchase
+    }
+    COUPON {
+      ObjectId _id
+      string code "unique"
+      string discountType
+      number discountValue
+      date validUntil
+    }

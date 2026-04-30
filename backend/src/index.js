@@ -1,12 +1,13 @@
 /**
  * Aurea Backend - Punto de entrada
- * API REST con Express + JWT
+ * API REST con Express + JWT + MongoDB
  */
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
+const { connectDatabase } = require("./config/database");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -30,8 +31,15 @@ app.get(`${API_PREFIX}/health`, (_req, res) => {
 // app.use(`${API_PREFIX}/orders`, require("./routes/orders"));
 
 // Arranque
-app.listen(PORT, () => {
-  console.log(`[Aurea] API escuchando en http://localhost:${PORT}${API_PREFIX}`);
-});
+async function start() {
+  await connectDatabase();
+  app.listen(PORT, () => {
+    console.log(`[Aurea] API escuchando en http://localhost:${PORT}${API_PREFIX}`);
+  });
+}
+
+if (require.main === module) {
+  start();
+}
 
 module.exports = app;
