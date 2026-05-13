@@ -41,7 +41,30 @@ const certificateSchema = new Schema(
       default: "pending",
     },
     issuedAt: { type: Date },
+    revokedAt: { type: Date },
+    revocationReason: { type: String, trim: true },
     error: { type: String },
+
+    // Verificación pública
+    publicSlug: { type: String, trim: true, unique: true, sparse: true, index: true }, // URL corta
+    qrCodeUrl: { type: String, trim: true }, // PNG con QR para incluir en la etiqueta
+    verificationCount: { type: Number, default: 0 },
+    lastVerifiedAt: { type: Date },
+
+    // Datos técnicos de la transacción
+    gasUsed: { type: Number },
+    gasPriceWei: { type: String, trim: true }, // como string para evitar precisión
+    transactionFeeEth: { type: Number },
+
+    // Transferencia de propiedad (cuando un cliente revende su prenda)
+    transferHistory: [
+      {
+        from: { type: String, trim: true },
+        to: { type: String, trim: true },
+        transactionHash: { type: String, trim: true },
+        transferredAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );

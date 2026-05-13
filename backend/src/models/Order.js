@@ -88,9 +88,45 @@ const orderSchema = new Schema(
     },
 
     // Auditoría / blockchain
-    notes: { type: String, trim: true },
+    notes: { type: String, trim: true }, // notas internas (empleado)
+    customerNotes: { type: String, trim: true }, // notas del cliente
     employeeAssigned: { type: Schema.Types.ObjectId, ref: "Employee" },
     certificatesIssued: { type: Boolean, default: false },
+
+    // Facturación
+    invoiceNumber: { type: String, trim: true, unique: true, sparse: true },
+    invoiceUrl: { type: String, trim: true }, // URL al PDF de factura
+    invoiceIssuedAt: { type: Date },
+
+    // Regalo
+    isGift: { type: Boolean, default: false },
+    giftMessage: { type: String, trim: true, maxlength: 300 },
+    giftWrap: { type: Boolean, default: false },
+
+    // Devoluciones
+    returnDeadline: { type: Date }, // último día para devolver
+    refundedAmount: { type: Number, default: 0, min: 0 },
+    refundReason: { type: String, trim: true },
+
+    // Plazos
+    expectedDeliveryDate: { type: Date },
+    cancelledAt: { type: Date },
+    cancellationReason: { type: String, trim: true },
+
+    // Historial de estados (útil para timeline en el panel)
+    statusHistory: [
+      {
+        status: { type: String },
+        changedAt: { type: Date, default: Date.now },
+        changedBy: { type: Schema.Types.ObjectId, ref: "Employee" },
+        note: { type: String, trim: true },
+      },
+    ],
+
+    // Auditoría
+    sourceChannel: { type: String, enum: ["web", "mobile", "manual"], default: "web" },
+    ipAddress: { type: String, trim: true },
+    userAgent: { type: String, trim: true },
   },
   { timestamps: true }
 );

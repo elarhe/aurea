@@ -30,8 +30,17 @@ const employeeSchema = new Schema(
     permissions: [{ type: String }], // permisos granulares opcionales
     department: { type: String, trim: true },
 
+    // Datos laborales
+    phone: { type: String, trim: true },
+    dni: { type: String, trim: true, uppercase: true },
+    avatar: { type: String, trim: true },
+    hireDate: { type: Date, default: Date.now },
+    jobTitle: { type: String, trim: true }, // ej. "Responsable de almacén"
+    notes: { type: String, trim: true }, // notas internas de RRHH
+
     isActive: { type: Boolean, default: true },
     lastLoginAt: { type: Date },
+    loginCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

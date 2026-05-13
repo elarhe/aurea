@@ -14,9 +14,32 @@ const reviewSchema = new Schema(
     title: { type: String, trim: true, maxlength: 120 },
     comment: { type: String, trim: true, maxlength: 2000 },
 
+    // Valoraciones específicas de moda
+    sizeFeedback: { type: String, enum: ["small", "true_to_size", "large"], default: "true_to_size" },
+    qualityRating: { type: Number, min: 1, max: 5 },
+    valueRating: { type: Number, min: 1, max: 5 }, // relación calidad-precio
+
+    // Multimedia
+    images: [{ type: String, trim: true }],
+    videoUrl: { type: String, trim: true },
+
     verifiedPurchase: { type: Boolean, default: false },
     isApproved: { type: Boolean, default: true },
     helpfulCount: { type: Number, default: 0 },
+    notHelpfulCount: { type: Number, default: 0 },
+
+    // Moderación
+    reported: { type: Boolean, default: false },
+    reportedReason: { type: String, trim: true },
+    moderatedBy: { type: Schema.Types.ObjectId, ref: "Employee" },
+    moderatedAt: { type: Date },
+
+    // Respuesta oficial de la marca
+    reply: {
+      message: { type: String, trim: true, maxlength: 1000 },
+      author: { type: Schema.Types.ObjectId, ref: "Employee" },
+      repliedAt: { type: Date },
+    },
   },
   { timestamps: true }
 );

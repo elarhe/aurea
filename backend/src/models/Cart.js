@@ -17,9 +17,16 @@ const cartItemSchema = new Schema(
 const cartSchema = new Schema(
   {
     user: { type: Schema.Types.ObjectId, ref: "User", required: true, unique: true, index: true },
+    guestSessionId: { type: String, trim: true, sparse: true, index: true }, // carrito de invitado
     items: [cartItemSchema],
     subtotal: { type: Number, default: 0 },
+    discount: { type: Number, default: 0, min: 0 },
+    couponCode: { type: String, trim: true, uppercase: true },
+    estimatedShipping: { type: Number, default: 0, min: 0 },
+    estimatedTax: { type: Number, default: 0, min: 0 },
+    estimatedTotal: { type: Number, default: 0, min: 0 },
     currency: { type: String, default: "EUR" },
+    expiresAt: { type: Date, index: { expireAfterSeconds: 0 } }, // TTL automático
   },
   { timestamps: true }
 );

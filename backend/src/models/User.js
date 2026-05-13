@@ -22,6 +22,10 @@ const userSchema = new Schema(
     phone: { type: String, trim: true },
     birthDate: { type: Date },
     gender: { type: String, enum: ["female", "male", "other", "unspecified"], default: "unspecified" },
+    avatar: { type: String, trim: true }, // URL del avatar
+    dni: { type: String, trim: true, uppercase: true }, // DNI/NIE para facturas
+    preferredLanguage: { type: String, enum: ["es", "en", "ca"], default: "es" },
+    preferredCurrency: { type: String, default: "EUR" },
 
     addresses: [{ type: Schema.Types.ObjectId, ref: "Address" }],
     defaultAddress: { type: Schema.Types.ObjectId, ref: "Address" },
@@ -29,12 +33,21 @@ const userSchema = new Schema(
     wishlist: [{ type: Schema.Types.ObjectId, ref: "Product" }],
     walletAddress: { type: String, trim: true }, // dirección Ethereum opcional
 
+    // Marketing / fidelización
+    newsletter: { type: Boolean, default: false },
+    marketingConsent: { type: Boolean, default: false }, // RGPD
+    marketingConsentDate: { type: Date },
+    loyaltyPoints: { type: Number, default: 0, min: 0 },
+    referralCode: { type: String, trim: true, unique: true, sparse: true },
+    referredBy: { type: Schema.Types.ObjectId, ref: "User" },
+
     isActive: { type: Boolean, default: true },
     emailVerified: { type: Boolean, default: false },
     emailVerificationToken: { type: String, select: false },
     passwordResetToken: { type: String, select: false },
     passwordResetExpires: { type: Date, select: false },
     lastLoginAt: { type: Date },
+    loginCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
