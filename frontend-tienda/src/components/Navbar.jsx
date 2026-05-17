@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, NavLink } from "react-router-dom";
 
 const nav = [
@@ -10,6 +10,19 @@ const nav = [
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [userMenu, setUserMenu] = useState(false);
+  const userMenuRef = useRef(null);
+
+  // Cerrar dropdown al hacer clic fuera
+  useEffect(() => {
+    const handler = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setUserMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   return (
     <header className="sticky top-0 z-40 bg-cream/95 backdrop-blur border-b border-stone-200">
@@ -41,9 +54,44 @@ export default function Navbar() {
           <button aria-label="Buscar" className="hover:text-aurea-600">
             <SearchIcon />
           </button>
-          <button aria-label="Cuenta" className="hidden sm:block hover:text-aurea-600">
-            <UserIcon />
-          </button>
+
+          {/* Botón usuario con dropdown */}
+          <div className="relative hidden sm:block" ref={userMenuRef}>
+            <button
+              aria-label="Cuenta"
+              className="hover:text-aurea-600 transition-colors"
+              onClick={() => setUserMenu((v) => !v)}
+            >
+              <UserIcon />
+            </button>
+
+            {userMenu && (
+              <div className="absolute right-0 top-8 w-48 bg-white border border-stone-200 rounded-xl shadow-lg overflow-hidden z-50">
+                <div className="py-1">
+                  <p className="px-4 py-2 text-xs text-stone-400 uppercase tracking-widest border-b border-stone-100">
+                    Mi cuenta
+                  </p>
+                  <Link
+                    to="/login"
+                    onClick={() => setUserMenu(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition-colors"
+                  >
+                    <span className="text-base">→</span>
+                    Iniciar sesión
+                  </Link>
+                  <Link
+                    to="/registro"
+                    onClick={() => setUserMenu(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition-colors border-t border-stone-100"
+                  >
+                    <span className="text-base">✦</span>
+                    Crear cuenta
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+
           <button aria-label="Favoritos" className="hidden sm:block hover:text-aurea-600">
             <HeartIcon />
           </button>
@@ -78,6 +126,14 @@ export default function Navbar() {
                 </NavLink>
               </li>
             ))}
+            <li className="border-t border-stone-200 pt-3 space-y-2">
+              <Link to="/login" onClick={() => setOpen(false)} className="block text-sm text-stone-600">
+                Iniciar sesión
+              </Link>
+              <Link to="/registro" onClick={() => setOpen(false)} className="block text-sm text-stone-600">
+                Crear cuenta
+              </Link>
+            </li>
           </ul>
         </nav>
       )}
@@ -85,7 +141,7 @@ export default function Navbar() {
   );
 }
 
-/* ---------- Iconos inline (sin librerías) ---------- */
+/* ---------- Iconos inline ---------- */
 function SearchIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
