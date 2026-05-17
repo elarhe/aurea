@@ -114,17 +114,14 @@ const registroCliente = async (req, res) => {
       return res.status(409).json({ ok: false, mensaje: "Ya existe una cuenta con ese email" });
     }
 
-    const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_SALT_ROUNDS) || 12);
-    const passwordHash = await bcrypt.hash(password, salt);
-
     const usuario = await User.create({
-      firstName,
-      lastName: lastName || "",
-      email: email.toLowerCase(),
-      password: passwordHash,
-      isActive: true,
-      emailVerified: false,
-    });
+        firstName,
+        lastName: lastName || "",
+        email: email.toLowerCase(),
+        password: password,
+        isActive: true,
+        emailVerified: false,
+        });
 
     const token = generarToken(usuario._id, "user");
 

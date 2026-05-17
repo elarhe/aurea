@@ -8,7 +8,7 @@ const nav = [
   { to: "/tienda", label: "Novedades" },
 ];
 
-export default function Navbar() {
+export default function Navbar({ onAbrirAuth, cliente, onLogout }) {
   const [open, setOpen] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
   const userMenuRef = useRef(null);
@@ -56,41 +56,34 @@ export default function Navbar() {
           </button>
 
           {/* Botón usuario con dropdown */}
-          <div className="relative hidden sm:block" ref={userMenuRef}>
-            <button
-              aria-label="Cuenta"
-              className="hover:text-aurea-600 transition-colors"
-              onClick={() => setUserMenu((v) => !v)}
-            >
+          <div className="relative hidden sm:block">
+  {cliente ? (
+    <>
+      <button onClick={() => setUserMenu(v => !v)} className="flex items-center gap-2 hover:text-aurea-600 transition-colors">
+        <div className="w-7 h-7 rounded-full bg-ink text-cream flex items-center justify-center text-xs font-medium">
+          {cliente.nombre?.[0]?.toUpperCase() || "U"}
+                </div>
+              </button>
+              {userMenu && (
+                <div className="absolute right-0 top-10 w-52 bg-white border border-stone-200 rounded-xl shadow-lg overflow-hidden z-50">
+                  <div className="px-4 py-3 border-b border-stone-100">
+                    <p className="text-sm font-medium text-ink truncate">{cliente.nombre}</p>
+                    <p className="text-xs text-stone-400 truncate">{cliente.email}</p>
+                  </div>
+                  <div className="py-1">
+                    <button className="w-full text-left px-4 py-2.5 text-sm text-stone-600 hover:bg-stone-50 transition-colors">Mis pedidos</button>
+                    <button className="w-full text-left px-4 py-2.5 text-sm text-stone-600 hover:bg-stone-50 transition-colors">Mi perfil</button>
+                    <button onClick={() => { onLogout(); setUserMenu(false); }} className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors border-t border-stone-100">Cerrar sesión</button>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <button aria-label="Cuenta" onClick={onAbrirAuth} className="hover:text-aurea-600 transition-colors">
               <UserIcon />
             </button>
-
-            {userMenu && (
-              <div className="absolute right-0 top-8 w-48 bg-white border border-stone-200 rounded-xl shadow-lg overflow-hidden z-50">
-                <div className="py-1">
-                  <p className="px-4 py-2 text-xs text-stone-400 uppercase tracking-widest border-b border-stone-100">
-                    Mi cuenta
-                  </p>
-                  <Link
-                    to="/login"
-                    onClick={() => setUserMenu(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition-colors"
-                  >
-                    <span className="text-base">→</span>
-                    Iniciar sesión
-                  </Link>
-                  <Link
-                    to="/registro"
-                    onClick={() => setUserMenu(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 transition-colors border-t border-stone-100"
-                  >
-                    <span className="text-base">✦</span>
-                    Crear cuenta
-                  </Link>
-                </div>
-              </div>
-            )}
-          </div>
+          )}
+        </div>
 
           <button aria-label="Favoritos" className="hidden sm:block hover:text-aurea-600">
             <HeartIcon />

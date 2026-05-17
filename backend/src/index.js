@@ -1,7 +1,3 @@
-/**
- * Aurea Backend - Punto de entrada
- * API REST con Express + JWT + MongoDB
- */
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -20,15 +16,14 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 
+// Rutas
+const authRoutes = require("./routes/auth.routes");
+app.use(`${API_PREFIX}/auth`, authRoutes);
+
 // Health check
 app.get(`${API_PREFIX}/health`, (_req, res) => {
   res.json({ status: "ok", service: "aurea-backend", timestamp: new Date().toISOString() });
 });
-
-// TODO: montar routers reales en las próximas semanas
-// app.use(`${API_PREFIX}/auth`, require("./routes/auth"));
-// app.use(`${API_PREFIX}/products`, require("./routes/products"));
-// app.use(`${API_PREFIX}/orders`, require("./routes/orders"));
 
 // Arranque
 async function start() {
