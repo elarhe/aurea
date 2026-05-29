@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
+import { useCart } from "../context/CartContext.jsx";
 
 const nav = [
   { to: "/tienda/mujer", label: "Mujer" },
@@ -8,12 +10,14 @@ const nav = [
   { to: "/tienda", label: "Novedades" },
 ];
 
-export default function Navbar({ onAbrirAuth, cliente, onLogout }) {
+export default function Navbar({ onAbrirAuth }) {
+  const { cliente, logout } = useAuth();
+  const { itemCount, openDrawer } = useCart();
   const [open, setOpen] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
   const userMenuRef = useRef(null);
+  const navigate = useNavigate();
 
-  // Cerrar dropdown al hacer clic fuera
   useEffect(() => {
     const handler = (e) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
@@ -23,6 +27,16 @@ export default function Navbar({ onAbrirAuth, cliente, onLogout }) {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  const handleLogout = () => {
+    logout();
+    setUserMenu(false);
+    navigate("/");
+  };
+
+  const nombreMostrado = cliente
+    ? cliente.firstName || cliente.nombre || cliente.name || "U"
+    : "U";
 
   return (
     <header className="sticky top-0 z-40 bg-cream/95 backdrop-blur border-b border-stone-200">
@@ -56,44 +70,84 @@ export default function Navbar({ onAbrirAuth, cliente, onLogout }) {
           </button>
 
           {/* Botón usuario con dropdown */}
-          <div className="relative hidden sm:block">
-  {cliente ? (
-    <>
-      <button onClick={() => setUserMenu(v => !v)} className="flex items-center gap-2 hover:text-aurea-600 transition-colors">
-        <div className="w-7 h-7 rounded-full bg-ink text-cream flex items-center justify-center text-xs font-medium">
-          {cliente.nombre?.[0]?.toUpperCase() || "U"}
-                </div>
+          <div className="relative hidden sm:block" ref={userMenuRef}>
+            {cliente ? (
+              <>
+                <button
+                  onClick={() => setUserMenu((v) => !v)}
+                  className="flex items-center gap-2 hover:text-aurea-600 transition-colors"
+                >
+                  <div className="w-7 h-7 rounded-full bg-ink text-cream flex items-center justify-center text-xs font-medium">
+                    {nombreMostrado[0]?.toUpperCase() || "U"}
+                  </div>
+                </button>
+                {userMenu && (
+                  <div className="absolute right-0 top-10 w-56 bg-white border border-stone-200 rounded-xl shadow-lg overflow-hidden z-50">
+                    <div className="px-4 py-3 border-b border-stone-100">
+                      <p className="text-sm font-medium text-ink truncate">{nombreMostrado}</p>
+                      <p className="text-xs text-stone-400 truncate">{cliente.email}</p>
+                    </div>
+                    <div className="py-1">
+                      <Link
+                        to="/mis-pedidos"
+                        onClick={() => setUserMenu(false)}
+                        className="flex w-full text-left px-4 py-2.5 text-sm text-stone-600 hover:bg-stone-50 transition-colors"
+                      >
+                        Mis pedidos
+                      </Link>
+                      <Link
+                        to="/mis-certificados"
+                        onClick={() => setUserMenu(false)}
+                        className="flex w-full text-left px-4 py-2.5 text-sm text-stone-600 hover:bg-stone-50 transition-colors"
+                      >
+                        Mis certificados
+                      </Link>
+                      <Link
+                        to="/perfil"
+                        onClick={() => setUserMenu(false)}
+                        className="flex w-full text-left px-4 py-2.5 text-sm text-stone-600 hover:bg-stone-50 transition-colors"
+                      >
+                        Mi perfil
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors border-t border-stone-100"
+                      >
+                        Cerrar sesión
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <button
+                aria-label="Cuenta"
+                onClick={onAbrirAuth}
+                className="hover:text-aurea-600 transition-colors"
+              >
+                <UserIcon />
               </button>
-              {userMenu && (
-                <div className="absolute right-0 top-10 w-52 bg-white border border-stone-200 rounded-xl shadow-lg overflow-hidden z-50">
-                  <div className="px-4 py-3 border-b border-stone-100">
-                    <p className="text-sm font-medium text-ink truncate">{cliente.nombre}</p>
-                    <p className="text-xs text-stone-400 truncate">{cliente.email}</p>
-                  </div>
-                  <div className="py-1">
-                    <button className="w-full text-left px-4 py-2.5 text-sm text-stone-600 hover:bg-stone-50 transition-colors">Mis pedidos</button>
-                    <button className="w-full text-left px-4 py-2.5 text-sm text-stone-600 hover:bg-stone-50 transition-colors">Mi perfil</button>
-                    <button onClick={() => { onLogout(); setUserMenu(false); }} className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors border-t border-stone-100">Cerrar sesión</button>
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <button aria-label="Cuenta" onClick={onAbrirAuth} className="hover:text-aurea-600 transition-colors">
-              <UserIcon />
-            </button>
-          )}
-        </div>
+            )}
+          </div>
 
           <button aria-label="Favoritos" className="hidden sm:block hover:text-aurea-600">
             <HeartIcon />
           </button>
-          <button aria-label="Carrito" className="relative hover:text-aurea-600">
+
+          {/* Carrito — abre drawer */}
+          <button
+            aria-label="Carrito"
+            onClick={openDrawer}
+            className="relative hover:text-aurea-600"
+          >
             <BagIcon />
-            <span className="absolute -top-1 -right-2 bg-aurea-500 text-cream text-[10px] rounded-full h-4 w-4 flex items-center justify-center">
-              0
-            </span>
+            {itemCount > 0 && (
+              <span className="absolute -top-1 -right-2 bg-aurea-500 text-cream text-[10px] rounded-full h-4 w-4 flex items-center justify-center">
+                {itemCount > 9 ? "9+" : itemCount}
+              </span>
+            )}
           </button>
+
           <button
             aria-label="Menú"
             className="md:hidden ml-2"
@@ -120,12 +174,18 @@ export default function Navbar({ onAbrirAuth, cliente, onLogout }) {
               </li>
             ))}
             <li className="border-t border-stone-200 pt-3 space-y-2">
-              <Link to="/login" onClick={() => setOpen(false)} className="block text-sm text-stone-600">
-                Iniciar sesión
-              </Link>
-              <Link to="/registro" onClick={() => setOpen(false)} className="block text-sm text-stone-600">
-                Crear cuenta
-              </Link>
+              {cliente ? (
+                <>
+                  <Link to="/mis-pedidos" onClick={() => setOpen(false)} className="block text-sm text-stone-600">Mis pedidos</Link>
+                  <Link to="/mis-certificados" onClick={() => setOpen(false)} className="block text-sm text-stone-600">Mis certificados</Link>
+                  <Link to="/perfil" onClick={() => setOpen(false)} className="block text-sm text-stone-600">Mi perfil</Link>
+                  <button onClick={() => { handleLogout(); setOpen(false); }} className="block text-sm text-red-500">Cerrar sesión</button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => { onAbrirAuth(); setOpen(false); }} className="block text-sm text-stone-600">Iniciar sesión</button>
+                </>
+              )}
             </li>
           </ul>
         </nav>

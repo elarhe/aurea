@@ -18,7 +18,28 @@ app.use(morgan("dev"));
 
 // Rutas
 const authRoutes = require("./routes/auth.routes");
+const certificateRoutes = require("./routes/certificate.routes");
+const productRoutes = require("./routes/products.routes");
+const categoryRoutes = require("./routes/categories.routes");
+const cartRoutes = require("./routes/cart.routes");
+const orderRoutes = require("./routes/orders.routes");
+const reviewRoutes = require("./routes/reviews.routes");
+const userRoutes = require("./routes/users.routes");
+const employeeRoutes = require("./routes/employees.routes");
+const statsRoutes = require("./routes/stats.routes");
+const couponRoutes = require("./routes/coupons.routes");
+
 app.use(`${API_PREFIX}/auth`, authRoutes);
+app.use(`${API_PREFIX}/certificates`, certificateRoutes);
+app.use(`${API_PREFIX}/products`, productRoutes);
+app.use(`${API_PREFIX}/categories`, categoryRoutes);
+app.use(`${API_PREFIX}/cart`, cartRoutes);
+app.use(`${API_PREFIX}/orders`, orderRoutes);
+app.use(`${API_PREFIX}/reviews`, reviewRoutes);
+app.use(`${API_PREFIX}/users`, userRoutes);
+app.use(`${API_PREFIX}/employees`, employeeRoutes);
+app.use(`${API_PREFIX}/stats`, statsRoutes);
+app.use(`${API_PREFIX}/coupons`, couponRoutes);
 
 // Health check
 app.get(`${API_PREFIX}/health`, (_req, res) => {

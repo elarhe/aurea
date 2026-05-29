@@ -30,7 +30,7 @@ export default function AuthModal({ tab, onCambiarTab, onCerrar, onLogin }) {
       if (!data.ok) throw new Error(data.mensaje);
       localStorage.setItem("aurea_token_cliente", data.token);
       localStorage.setItem("aurea_cliente", JSON.stringify(data.usuario));
-      onLogin(data.usuario);
+      onLogin(data.usuario, data.token);
     } catch (err) {
       setError(err.message || "Credenciales incorrectas");
     } finally {
@@ -54,7 +54,7 @@ export default function AuthModal({ tab, onCambiarTab, onCerrar, onLogin }) {
       if (!data.ok) throw new Error(data.mensaje);
       localStorage.setItem("aurea_token_cliente", data.token);
       localStorage.setItem("aurea_cliente", JSON.stringify(data.usuario));
-      onLogin(data.usuario);
+      onLogin(data.usuario, data.token);
     } catch (err) {
       setError(err.message || "Error al crear la cuenta");
     } finally {

@@ -32,27 +32,40 @@ export const authService = {
   me: () => api.get("/auth/me"),
 };
 
+// ─── STATS ───────────────────────────────────────────────────────────
+export const statsService = {
+  getDashboard: () => api.get("/stats/dashboard"),
+};
+
 // ─── PRODUCTOS ───────────────────────────────────────────────────────
 export const productosService = {
-  getAll: () => api.get("/productos"),
-  getById: (id) => api.get(`/productos/${id}`),
-  crear: (data) => api.post("/productos", data),
-  editar: (id, data) => api.put(`/productos/${id}`, data),
-  eliminar: (id) => api.delete(`/productos/${id}`),
+  getAll: (params) => api.get("/products", { params }),
+  getById: (id) => api.get(`/products/${id}`),
+  crear: (data) => api.post("/products", data),
+  editar: (id, data) => api.put(`/products/${id}`, data),
+  eliminar: (id) => api.delete(`/products/${id}`),
 };
 
 // ─── PEDIDOS ─────────────────────────────────────────────────────────
 export const pedidosService = {
-  getAll: () => api.get("/pedidos"),
-  getById: (id) => api.get(`/pedidos/${id}`),
-  cambiarEstado: (id, estado) => api.patch(`/pedidos/${id}/estado`, { estado }),
+  getAll: (params) => api.get("/orders", { params }),
+  getById: (id) => api.get(`/orders/${id}`),
+  cambiarEstado: (id, status, note) =>
+    api.patch(`/orders/${id}/status`, { status, note }),
+};
+
+// ─── CERTIFICADOS ────────────────────────────────────────────────────
+export const certificadosService = {
+  getAll: (params) => api.get("/certificates", { params }),
+  emitir: (orderId, orderItemId) =>
+    api.post("/certificates/emitir", { orderId, orderItemId }),
 };
 
 // ─── EMPLEADOS ───────────────────────────────────────────────────────
 export const empleadosService = {
-  getAll: () => api.get("/empleados"),
-  toggleEstado: (id) => api.patch(`/empleados/${id}/toggle-estado`),
+  getAll: (params) => api.get("/employees", { params }),
   crear: (data) => api.post("/auth/empleados/crear", data),
+  toggleEstado: (id) => api.patch(`/employees/${id}/toggle`),
 };
 
 export default api;
