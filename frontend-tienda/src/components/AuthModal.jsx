@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 
 export default function AuthModal({ tab, onCambiarTab, onCerrar, onLogin }) {
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
-  const [regForm, setRegForm] = useState({ firstName: "", lastName: "", email: "", password: "", confirmar: "" });
+  const [regForm, setRegForm] = useState({ firstName: "", lastName: "", email: "", password: "", confirmar: "", gender: "" });
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
   const [mostrarPass, setMostrarPass] = useState(false);
@@ -111,6 +111,18 @@ export default function AuthModal({ tab, onCambiarTab, onCerrar, onLogin }) {
                   <input type="text" value={regForm.lastName} onChange={e => setRegForm(f => ({ ...f, lastName: e.target.value }))} placeholder="García" className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:border-stone-400 transition-colors" />
                 </div>
               </div>
+              <div className="col-span-2">
+              <label className="text-xs text-stone-400 uppercase tracking-widest mb-1.5 block">Género</label>
+              <select
+                className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:border-stone-400 transition-colors"
+                value={regForm.gender}
+                onChange={e => setRegForm(f => ({ ...f, gender: e.target.value }))}
+              >
+                <option value="">Prefiero no decirlo</option>
+                <option value="female">Mujer</option>
+                <option value="male">Hombre</option>
+              </select>
+            </div>
               <div>
                 <label className="text-xs text-stone-400 uppercase tracking-widest mb-1.5 block">Email *</label>
                 <input type="email" value={regForm.email} onChange={e => setRegForm(f => ({ ...f, email: e.target.value }))} placeholder="tu@email.com" className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:border-stone-400 transition-colors" />

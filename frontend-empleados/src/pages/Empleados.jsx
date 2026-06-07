@@ -99,7 +99,7 @@ export default function Empleados() {
     try {
       const res = await empleadosService.getAll();
       const resData = res.data;
-      setEmpleados(resData.employees || resData.data || resData || []);
+      setEmpleados(resData.empleados || resData.employees || resData.data || []);
     } catch (e) {
       setError(e.response?.data?.message || "Error al cargar empleados");
     } finally {

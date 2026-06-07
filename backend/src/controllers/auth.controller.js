@@ -143,7 +143,11 @@ const registroCliente = async (req, res) => {
 // ─── CREAR ADMIN (solo para setup inicial) ──────────────────────────
 const crearAdmin = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, role = "admin" } = req.body;
+    const { firstName, lastName, nombre, email, password, role = "admin" } = req.body;
+    // Soporte para "nombre" (campo del frontend)
+    const [primerNombre, ...resto] = (nombre || "").split(" ");
+    const fName = firstName || primerNombre || "";
+    const lName = lastName || resto.join(" ") || "-";
 
     const existe = await Employee.findOne({ email: email.toLowerCase() });
     if (existe) {
@@ -154,10 +158,10 @@ const crearAdmin = async (req, res) => {
     const passwordHash = await bcrypt.hash(password, salt);
 
     const empleado = await Employee.create({
-      firstName,
-      lastName: lastName || "",
+      firstName: fName,
+      lastName: lName,
       email: email.toLowerCase(),
-      password: passwordHash,
+      password,
       role,
       isActive: true,
     });

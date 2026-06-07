@@ -7,6 +7,7 @@ import Productos from "./pages/Productos";
 import Empleados from "./pages/Empleados";
 import Certificados from "./pages/Certificados";
 import Login from "./pages/Login";
+import Clientes from "./pages/Clientes";
 
 const pages = {
   dashboard: <Dashboard />,
@@ -14,6 +15,7 @@ const pages = {
   productos: <Productos />,
   empleados: <Empleados />,
   certificados: <Certificados />,
+  clientes: <Clientes />,
 };
 
 function PanelLayout() {

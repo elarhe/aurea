@@ -16,4 +16,11 @@ router.post("/addresses", ctrl.crearDireccion);
 router.put("/addresses/:id", ctrl.actualizarDireccion);
 router.delete("/addresses/:id", ctrl.eliminarDireccion);
 
+const { soloAdmin } = require("../middleware/auth.middleware");
+router.get("/", proteger, soloAdmin, ctrl.listarUsuarios);
+
+router.delete("/:id", proteger, soloAdmin, ctrl.eliminarUsuario);
+
+
+
 module.exports = router;

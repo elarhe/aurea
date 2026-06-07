@@ -223,6 +223,33 @@ const eliminarDireccion = async (req, res) => {
   }
 };
 
+const listarUsuarios = async (req, res) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    const skip = (page - 1) * limit;
+    const [usuarios, total] = await Promise.all([
+      User.find().select("-password").sort({ createdAt: -1 }).skip(skip).limit(parseInt(limit)),
+      User.countDocuments(),
+    ]);
+    res.json({ ok: true, usuarios, total, page: parseInt(page) });
+  } catch (error) {
+    res.status(500).json({ ok: false, mensaje: "Error al obtener usuarios" });
+  }
+};
+
+const eliminarUsuario = async (req, res) => {
+  try {
+    const usuario = await User.findByIdAndDelete(req.params.id);
+    if (!usuario) {
+      return res.status(404).json({ ok: false, mensaje: "Usuario no encontrado" });
+    }
+    res.json({ ok: true, mensaje: "Usuario eliminado correctamente" });
+  } catch (error) {
+    res.status(500).json({ ok: false, mensaje: "Error al eliminar usuario" });
+  }
+};
+
+
 module.exports = {
   miPerfil,
   actualizarPerfil,
@@ -233,4 +260,6 @@ module.exports = {
   crearDireccion,
   actualizarDireccion,
   eliminarDireccion,
+  listarUsuarios,
+  eliminarUsuario,
 };

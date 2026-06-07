@@ -138,7 +138,7 @@ export default function Pedidos() {
       if (filtro !== "todos") params.status = filtro;
       const res = await pedidosService.getAll(params);
       const resData = res.data;
-      setPedidos(resData.orders || resData.data || resData || []);
+      setPedidos(resData.pedidos || resData.orders || resData.data || []);
       setTotal(resData.total || resData.count || 0);
     } catch (e) {
       setError(e.response?.data?.message || "Error al cargar pedidos");

@@ -168,7 +168,7 @@ export default function Certificados() {
       if (filtroNetwork !== "todos") params.network = filtroNetwork;
       const res = await certificadosService.getAll(params);
       const resData = res.data;
-      const lista = resData.certificates || resData.data || resData || [];
+      const lista = resData.certificados || resData.certificates || resData.data || [];
       setCertificados(lista);
       setTotal(resData.total || resData.count || lista.length || 0);
 

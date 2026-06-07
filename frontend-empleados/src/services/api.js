@@ -68,4 +68,9 @@ export const empleadosService = {
   toggleEstado: (id) => api.patch(`/employees/${id}/toggle`),
 };
 
+// ─── CATEGORÍAS ──────────────────────────────────────────────────────
+export const categoriasService = {
+  getAll: () => api.get("/categories"),
+};
+
 export default api;

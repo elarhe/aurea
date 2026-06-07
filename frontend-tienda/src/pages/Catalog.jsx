@@ -30,7 +30,7 @@ export default function Catalog() {
   useEffect(() => {
     categoriasService
       .getAll()
-      .then((data) => setCategorias(data.categories || data || []))
+      .then((data) => setCategorias(data.categorias || data.categories || data.data || []))
       .catch(() => {});
   }, []);
 
@@ -46,7 +46,7 @@ export default function Catalog() {
       if (genero) params.gender = genero;
 
       const data = await productosService.getAll(params);
-      const list = data.products || data.data || data || [];
+      const list = data.productos || data.products || data.data || [];
       setProductos(list);
       setTotal(data.total || list.length);
       setTotalPages(data.totalPages || Math.ceil((data.total || list.length) / LIMIT) || 1);
