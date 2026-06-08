@@ -1,0 +1,176 @@
+import React, { useState, useEffect } from "react";
+import {
+  View, Text, ScrollView, TouchableOpacity, Image,
+  StyleSheet, ActivityIndicator, Alert
+} from "react-native";
+import { productosService } from "../services/api";
+import { useAuth } from "../context/AuthContext";
+import { useCarrito } from "../context/CarritoContext";
+
+export default function ProductoScreen({ route, navigation }) {
+  const { slug, producto: productoInicial } = route.params;
+  const { cliente } = useAuth();
+  const { añadir } = useCarrito();
+  const [producto, setProducto] = useState(productoInicial || null);
+  const [cargando, setCargando] = useState(!productoInicial);
+  const [variantSeleccionada, setVariantSeleccionada] = useState(null);
+  const [añadiendo, setAñadiendo] = useState(false);
+
+  useEffect(() => {
+    if (!productoInicial && slug) {
+      productosService.getBySlug(slug)
+        .then((res) => { const data = res.data; setProducto(data.producto || data.product || data); })
+        .catch(() => {})
+        .finally(() => setCargando(false));
+    }
+    if (productoInicial?.variants?.length > 0) setVariantSeleccionada(productoInicial.variants[0]);
+  }, []);
+
+  const añadirAlCarrito = async () => {
+    if (!cliente) {
+      Alert.alert("Inicia sesión", "Necesitas iniciar sesión para añadir al carrito.", [
+        { text: "Cancelar", style: "cancel" },
+        { text: "Iniciar sesión", onPress: () => navigation.navigate("PerfilTab") },
+      ]);
+      return;
+    }
+    if (producto?.variants?.length > 0 && !variantSeleccionada) {
+      Alert.alert("Selecciona talla", "Por favor selecciona una variante antes de añadir al carrito.");
+      return;
+    }
+    setAñadiendo(true);
+    try {
+      await añadir(producto._id || producto.id, variantSeleccionada?.sku || "default", 1);
+      Alert.alert("✓ Añadido", `${producto.name || producto.nombre} se añadió al carrito.`, [
+        { text: "Ver cesta", onPress: () => navigation.navigate("CarritoTab") },
+        { text: "Seguir comprando", style: "cancel" },
+      ]);
+    } catch (e) {
+      Alert.alert("Error", e.response?.data?.mensaje || "No se pudo añadir al carrito.");
+    } finally {
+      setAñadiendo(false);
+    }
+  };
+
+  if (cargando) return <View style={styles.centered}><ActivityIndicator color="#1c1c1c" /></View>;
+  if (!producto) return <View style={styles.centered}><Text style={styles.errorText}>Producto no encontrado</Text></View>;
+
+  const nombre = producto.name || producto.nombre;
+  const precio = producto.price || producto.precio || 0;
+  const descripcion = producto.description || producto.descripcion;
+  const imagen = producto.coverImage || producto.imagen;
+  const variantes = producto.variants || [];
+  const materiales = producto.materials || producto.materiales || [];
+
+  return (
+    <View style={styles.container}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {imagen ? (
+          <Image source={{ uri: imagen }} style={styles.imagen} />
+        ) : (
+          <View style={[styles.imagen, styles.imagenPlaceholder]}>
+            <Text style={styles.placeholderText}>{(nombre || "?")[0]}</Text>
+          </View>
+        )}
+
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <Text style={styles.nombre}>{nombre}</Text>
+            <View style={styles.precioRow}>
+              <Text style={styles.precio}>{precio.toLocaleString("es-ES", { style: "currency", currency: "EUR" })}</Text>
+              {producto.compareAtPrice && (
+                <Text style={styles.precioAntes}>{producto.compareAtPrice.toLocaleString("es-ES", { style: "currency", currency: "EUR" })}</Text>
+              )}
+            </View>
+          </View>
+
+          {producto.certifiable && (
+            <View style={styles.certBanner}>
+              <Text style={styles.certIcon}>🛡</Text>
+              <Text style={styles.certText}>Esta prenda incluye certificado de autenticidad blockchain</Text>
+            </View>
+          )}
+
+          {variantes.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Talla / Color</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {variantes.map((v) => (
+                  <TouchableOpacity
+                    key={v.sku}
+                    style={[styles.variantBtn, variantSeleccionada?.sku === v.sku && styles.variantBtnSelected, v.stock === 0 && styles.variantBtnAgotado]}
+                    onPress={() => v.stock > 0 && setVariantSeleccionada(v)}
+                    disabled={v.stock === 0}
+                  >
+                    <Text style={[styles.variantText, variantSeleccionada?.sku === v.sku && styles.variantTextSelected, v.stock === 0 && styles.variantTextAgotado]}>
+                      {v.size}{v.color ? ` · ${v.color}` : ""}
+                    </Text>
+                    {v.stock === 0 && <Text style={styles.agotadoLabel}>Agotado</Text>}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+          {descripcion && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Descripción</Text>
+              <Text style={styles.descripcion}>{descripcion}</Text>
+            </View>
+          )}
+
+          {materiales.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Materiales</Text>
+              <Text style={styles.descripcion}>{materiales.join(", ")}</Text>
+            </View>
+          )}
+
+          <View style={{ height: 100 }} />
+        </View>
+      </ScrollView>
+
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={[styles.btnAñadir, añadiendo && styles.btnDisabled]}
+          onPress={añadirAlCarrito}
+          disabled={añadiendo}
+        >
+          <Text style={styles.btnAñadirText}>{añadiendo ? "Añadiendo..." : "Añadir al carrito"}</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#faf9f7" },
+  centered: { flex: 1, justifyContent: "center", alignItems: "center" },
+  errorText: { color: "#999", fontSize: 14 },
+  imagen: { width: "100%", height: 400, backgroundColor: "#f0ece6" },
+  imagenPlaceholder: { justifyContent: "center", alignItems: "center" },
+  placeholderText: { fontSize: 64, color: "#999", fontWeight: "700" },
+  content: { padding: 24 },
+  header: { marginBottom: 16 },
+  nombre: { fontSize: 24, fontWeight: "700", color: "#1c1c1c", marginBottom: 8, lineHeight: 32 },
+  precioRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  precio: { fontSize: 22, fontWeight: "700", color: "#1c1c1c" },
+  precioAntes: { fontSize: 16, color: "#999", textDecorationLine: "line-through" },
+  certBanner: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#f0ece6", padding: 14, borderRadius: 10, marginBottom: 20 },
+  certIcon: { fontSize: 20 },
+  certText: { flex: 1, fontSize: 13, color: "#666", lineHeight: 18 },
+  section: { marginBottom: 24 },
+  sectionTitle: { fontSize: 13, fontWeight: "700", color: "#1c1c1c", marginBottom: 12, letterSpacing: 0.5, textTransform: "uppercase" },
+  variantBtn: { borderWidth: 1, borderColor: "#e5e0d8", borderRadius: 8, paddingVertical: 10, paddingHorizontal: 16, marginRight: 10, backgroundColor: "#fff" },
+  variantBtnSelected: { borderColor: "#1c1c1c", backgroundColor: "#1c1c1c" },
+  variantBtnAgotado: { borderColor: "#f0ece6", opacity: 0.5 },
+  variantText: { fontSize: 13, color: "#1c1c1c", fontWeight: "500" },
+  variantTextSelected: { color: "#fff" },
+  variantTextAgotado: { color: "#999" },
+  agotadoLabel: { fontSize: 9, color: "#ef4444", marginTop: 2 },
+  descripcion: { fontSize: 14, color: "#666", lineHeight: 22 },
+  footer: { position: "absolute", bottom: 0, left: 0, right: 0, padding: 20, backgroundColor: "#faf9f7", borderTopWidth: 1, borderTopColor: "#f0ece6" },
+  btnAñadir: { backgroundColor: "#1c1c1c", borderRadius: 10, paddingVertical: 16, alignItems: "center" },
+  btnDisabled: { opacity: 0.6 },
+  btnAñadirText: { color: "#fff", fontSize: 15, fontWeight: "700", letterSpacing: 0.5 },
+});
