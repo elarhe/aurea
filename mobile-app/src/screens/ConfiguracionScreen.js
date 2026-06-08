@@ -10,14 +10,23 @@ export default function ConfiguracionScreen() {
   const { cliente, logout, actualizarCliente } = useAuth();
 
   const [seccion, setSeccion] = useState(null);
-
   const [firstName, setFirstName] = useState(cliente?.nombre?.split(" ")[0] || "");
   const [lastName, setLastName] = useState(cliente?.nombre?.split(" ").slice(1).join(" ") || "");
   const [email, setEmail] = useState(cliente?.email || "");
   const [passwordActual, setPasswordActual] = useState("");
   const [passwordNueva, setPasswordNueva] = useState("");
   const [passwordConfirmar, setPasswordConfirmar] = useState("");
+  const [idiomaSeleccionado, setIdiomaSeleccionado] = useState(cliente?.preferredLanguage || "es");
   const [cargando, setCargando] = useState(false);
+
+  const idiomaNombre = { es: "Español", en: "English", uk: "Українська" };
+
+  const opciones = [
+    { id: "nombre", label: "Nombre y apellido", valor: cliente?.nombre || "—", icon: "👤" },
+    { id: "email", label: "Email", valor: cliente?.email || "—", icon: "✉️" },
+    { id: "password", label: "Contraseña", valor: "••••••••", icon: "🔒" },
+    { id: "idioma", label: "Idioma", valor: idiomaNombre[cliente?.preferredLanguage || "es"], icon: "🌍" },
+  ];
 
   const guardarNombre = async () => {
     if (!firstName.trim()) { Alert.alert("Error", "El nombre no puede estar vacío"); return; }
@@ -66,14 +75,23 @@ export default function ConfiguracionScreen() {
     }
   };
 
-  const opciones = [
-    { id: "nombre", label: "Nombre y apellido", valor: cliente?.nombre || "—", icon: "👤" },
-    { id: "email", label: "Email", valor: cliente?.email || "—", icon: "✉️" },
-    { id: "password", label: "Contraseña", valor: "••••••••", icon: "🔒" },
-  ];
+  const guardarIdioma = async () => {
+    setCargando(true);
+    try {
+      await api.put("/users/me", { preferredLanguage: idiomaSeleccionado });
+      await actualizarCliente({ preferredLanguage: idiomaSeleccionado });
+      Alert.alert("✓ Guardado", "Idioma actualizado correctamente");
+      setSeccion(null);
+    } catch (e) {
+      Alert.alert("Error", e.response?.data?.mensaje || "No se pudo guardar");
+    } finally {
+      setCargando(false);
+    }
+  };
 
   return (
     <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
+
       <View style={styles.seccionCard}>
         {opciones.map((op, i) => (
           <TouchableOpacity
@@ -91,6 +109,7 @@ export default function ConfiguracionScreen() {
         ))}
       </View>
 
+      {/* Nombre */}
       {seccion === "nombre" && (
         <View style={styles.form}>
           <Text style={styles.formTitle}>Cambiar nombre</Text>
@@ -108,6 +127,7 @@ export default function ConfiguracionScreen() {
         </View>
       )}
 
+      {/* Email */}
       {seccion === "email" && (
         <View style={styles.form}>
           <Text style={styles.formTitle}>Cambiar email</Text>
@@ -121,6 +141,7 @@ export default function ConfiguracionScreen() {
         </View>
       )}
 
+      {/* Contraseña */}
       {seccion === "password" && (
         <View style={styles.form}>
           <Text style={styles.formTitle}>Cambiar contraseña</Text>
@@ -142,12 +163,41 @@ export default function ConfiguracionScreen() {
         </View>
       )}
 
-      <TouchableOpacity style={styles.logoutBtn} onPress={() =>
-        Alert.alert("Cerrar sesión", "¿Seguro que quieres cerrar sesión?", [
+      {/* Idioma */}
+      {seccion === "idioma" && (
+        <View style={styles.form}>
+          <Text style={styles.formTitle}>Idioma de la app</Text>
+          {[
+            { val: "es", label: "🇪🇸  Español" },
+            { val: "en", label: "🇬🇧  English" },
+            { val: "uk", label: "🇺🇦  Українська" },
+          ].map((lang) => (
+            <TouchableOpacity
+              key={lang.val}
+              style={[styles.idiomaOpcion, idiomaSeleccionado === lang.val && styles.idiomaOpcionSelected]}
+              onPress={() => setIdiomaSeleccionado(lang.val)}
+            >
+              <Text style={[styles.idiomaLabel, idiomaSeleccionado === lang.val && styles.idiomaLabelSelected]}>
+                {lang.label}
+              </Text>
+              {idiomaSeleccionado === lang.val && (
+                <Text style={styles.idiomaCheck}>✓</Text>
+              )}
+            </TouchableOpacity>
+          ))}
+          <TouchableOpacity style={[styles.btn, { marginTop: 16 }, cargando && styles.btnDisabled]} onPress={guardarIdioma} disabled={cargando}>
+            {cargando ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>GUARDAR</Text>}
+          </TouchableOpacity>
+        </View>
+      )}
+
+      <TouchableOpacity
+        style={styles.logoutBtn}
+        onPress={() => Alert.alert("Cerrar sesión", "¿Seguro que quieres cerrar sesión?", [
           { text: "Cancelar", style: "cancel" },
           { text: "Cerrar sesión", style: "destructive", onPress: logout },
-        ])
-      }>
+        ])}
+      >
         <Text style={styles.logoutText}>Cerrar sesión</Text>
       </TouchableOpacity>
 
@@ -171,9 +221,14 @@ const styles = StyleSheet.create({
   inputGroup: { marginBottom: 14 },
   label: { fontSize: 10, color: "#999", letterSpacing: 1.5, marginBottom: 8, fontWeight: "600" },
   input: { borderWidth: 1, borderColor: "#e5e0d8", borderRadius: 10, paddingHorizontal: 16, paddingVertical: 12, fontSize: 14, color: "#1c1c1c", backgroundColor: "#faf9f7" },
-  btn: { backgroundColor: "#1c1c1c", borderRadius: 10, paddingVertical: 14, alignItems: "center", marginTop: 4 },
+  btn: { backgroundColor: "#1c1c1c", borderRadius: 10, paddingVertical: 14, alignItems: "center" },
   btnDisabled: { opacity: 0.6 },
   btnText: { color: "#fff", fontSize: 12, fontWeight: "700", letterSpacing: 2 },
+  idiomaOpcion: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 14, borderWidth: 1, borderColor: "#e5e0d8", borderRadius: 10, marginBottom: 8, backgroundColor: "#faf9f7" },
+  idiomaOpcionSelected: { borderColor: "#1c1c1c", backgroundColor: "#f0ece6" },
+  idiomaLabel: { fontSize: 15, color: "#666" },
+  idiomaLabelSelected: { color: "#1c1c1c", fontWeight: "600" },
+  idiomaCheck: { color: "#c9a96e", fontSize: 18, fontWeight: "700" },
   logoutBtn: { margin: 16, padding: 16, backgroundColor: "#fff", borderRadius: 12, alignItems: "center" },
   logoutText: { color: "#ef4444", fontSize: 14, fontWeight: "600" },
 });
