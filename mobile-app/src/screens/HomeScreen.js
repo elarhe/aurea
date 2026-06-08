@@ -5,12 +5,14 @@ import {
 } from "react-native";
 import { productosService } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import { useIdioma } from "../i18n/IdiomaContext";
 
 const { height } = Dimensions.get("window");
 const HERO_IMAGE = "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1800&q=80";
 
 export default function HomeScreen({ navigation }) {
   const { cliente } = useAuth();
+  const { t } = useIdioma();
   const [productos, setProductos] = useState([]);
   const [cargando, setCargando] = useState(true);
 
@@ -31,17 +33,15 @@ export default function HomeScreen({ navigation }) {
       <ImageBackground source={{ uri: HERO_IMAGE }} style={styles.hero} resizeMode="cover">
         <View style={styles.heroOverlay} />
         <View style={styles.heroContent}>
-          <Text style={styles.heroEtiqueta}>COLECCIÓN SS26 · AURORA</Text>
-          <Text style={styles.heroTitulo}>{"Cada prenda,\nuna historia\núnica."}</Text>
+          <Text style={styles.heroEtiqueta}>{t.home.coleccion}</Text>
+          <Text style={styles.heroTitulo}>{t.home.heroTitulo}</Text>
           <View style={styles.heroDivider} />
-          <Text style={styles.heroDesc}>
-            Moda atemporal con certificado de autenticidad verificable en blockchain.
-          </Text>
+          <Text style={styles.heroDesc}>{t.home.heroDesc}</Text>
           <TouchableOpacity style={styles.heroBtnPrimary} onPress={() => navigation.navigate("CatalogoTab")}>
-            <Text style={styles.heroBtnPrimaryText}>DESCUBRIR COLECCIÓN</Text>
+            <Text style={styles.heroBtnPrimaryText}>{t.home.descubrirColeccion}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.heroBtnOutline}>
-            <Text style={styles.heroBtnOutlineText}>VERIFICAR CERTIFICADO</Text>
+            <Text style={styles.heroBtnOutlineText}>{t.home.verificarCertificado}</Text>
           </TouchableOpacity>
         </View>
       </ImageBackground>
@@ -49,29 +49,29 @@ export default function HomeScreen({ navigation }) {
       {/* BANNER OFERTA */}
       <View style={styles.ofertaBanner}>
         <View style={styles.ofertaLeft}>
-          <Text style={styles.ofertaEtiqueta}>OFERTA LIMITADA</Text>
-          <Text style={styles.ofertaTitulo}>Hasta 30% dto.</Text>
-          <Text style={styles.ofertaDesc}>En toda la colección de verano. Solo hasta fin de mes.</Text>
+          <Text style={styles.ofertaEtiqueta}>{t.home.ofertaEtiqueta}</Text>
+          <Text style={styles.ofertaTitulo}>{t.home.ofertaTitulo}</Text>
+          <Text style={styles.ofertaDesc}>{t.home.ofertaDesc}</Text>
           <TouchableOpacity style={styles.ofertaBtn} onPress={() => navigation.navigate("CatalogoTab")}>
-            <Text style={styles.ofertaBtnText}>VER OFERTAS →</Text>
+            <Text style={styles.ofertaBtnText}>{t.home.verOfertas}</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.ofertaRight}>
-        <Text style={styles.ofertaEmoji}>🏷</Text>
-        <Text style={styles.ofertaPorcentaje}>30%</Text>
-        <Text style={styles.ofertaDscto}>DTO</Text>
+          <Text style={styles.ofertaEmoji}>🏷</Text>
+          <Text style={styles.ofertaPorcentaje}>30%</Text>
+          <Text style={styles.ofertaDscto}>{t.home.descuento}</Text>
         </View>
       </View>
 
       {/* UNIVERSOS */}
       <View style={styles.section}>
-        <Text style={styles.sectionEtiqueta}>UNIVERSOS AUREA</Text>
-        <Text style={styles.sectionTitulo}>Explora la colección</Text>
+        <Text style={styles.sectionEtiqueta}>{t.home.universosEtiqueta}</Text>
+        <Text style={styles.sectionTitulo}>{t.home.universosTitulo}</Text>
         <View style={styles.universosRow}>
           {[
-            { label: "Mujer", emoji: "👗", cat: "mujer" },
-            { label: "Hombre", emoji: "👔", cat: "hombre" },
-            { label: "Accesorios", emoji: "👜", cat: "accesorios" },
+            { label: t.home.mujer, emoji: "👗", cat: "mujer" },
+            { label: t.home.hombre, emoji: "👔", cat: "hombre" },
+            { label: t.home.accesorios, emoji: "👜", cat: "accesorios" },
           ].map((u) => (
             <TouchableOpacity key={u.cat} style={styles.universoCard} onPress={() => navigation.navigate("CatalogoTab")} activeOpacity={0.8}>
               <Text style={styles.universoEmoji}>{u.emoji}</Text>
@@ -83,8 +83,8 @@ export default function HomeScreen({ navigation }) {
 
       {/* DESTACADOS */}
       <View style={styles.section}>
-        <Text style={styles.sectionEtiqueta}>SELECCIÓN</Text>
-        <Text style={styles.sectionTitulo}>Piezas destacadas</Text>
+        <Text style={styles.sectionEtiqueta}>{t.home.seleccionEtiqueta}</Text>
+        <Text style={styles.sectionTitulo}>{t.home.seleccionTitulo}</Text>
         {cargando ? (
           <ActivityIndicator color="#1c1c1c" style={{ marginTop: 20 }} />
         ) : (
@@ -120,15 +120,15 @@ export default function HomeScreen({ navigation }) {
 
       {/* CÓMO FUNCIONA BLOCKCHAIN */}
       <View style={styles.blockchainSection}>
-        <Text style={styles.sectionEtiqueta} style={{ color: "#c9a96e", fontSize: 10, letterSpacing: 3, fontWeight: "600", textAlign: "center", marginBottom: 6 }}>TECNOLOGÍA AUREA</Text>
-        <Text style={styles.blockchainTitulo}>¿Cómo funciona el{"\n"}certificado blockchain?</Text>
-        <View style={styles.heroDivider} style={{ width: 40, height: 1, backgroundColor: "#c9a96e", marginBottom: 24, alignSelf: "center" }} />
+        <Text style={{ color: "#c9a96e", fontSize: 10, letterSpacing: 3, fontWeight: "600", textAlign: "center", marginBottom: 6 }}>{t.home.tecnologiaEtiqueta}</Text>
+        <Text style={styles.blockchainTitulo}>{t.home.blockchainTitulo}</Text>
+        <View style={{ width: 40, height: 1, backgroundColor: "#c9a96e", marginBottom: 24, alignSelf: "center" }} />
 
         {[
-          { paso: "01", titulo: "Realizas tu compra", desc: "Seleccionas tu prenda y completas el pedido en Aurea.", icon: "🛒" },
-          { paso: "02", titulo: "Se genera el certificado", desc: "Nuestro sistema crea un certificado único e irrepetible para tu prenda.", icon: "📜" },
-          { paso: "03", titulo: "Se registra en blockchain", desc: "El certificado se graba permanentemente en la red Ethereum Sepolia.", icon: "🔗" },
-          { paso: "04", titulo: "Verificación pública", desc: "Cualquier persona puede verificar la autenticidad de tu prenda con el hash.", icon: "🛡" },
+          { paso: "01", titulo: t.home.paso1Titulo, desc: t.home.paso1Desc, icon: "🛒" },
+          { paso: "02", titulo: t.home.paso2Titulo, desc: t.home.paso2Desc, icon: "📜" },
+          { paso: "03", titulo: t.home.paso3Titulo, desc: t.home.paso3Desc, icon: "🔗" },
+          { paso: "04", titulo: t.home.paso4Titulo, desc: t.home.paso4Desc, icon: "🛡" },
         ].map((item) => (
           <View key={item.paso} style={styles.pasoRow}>
             <View style={styles.pasoIconContainer}>
@@ -154,10 +154,10 @@ export default function HomeScreen({ navigation }) {
       {/* CUENTA BANNER si no está logueado */}
       {!cliente && (
         <View style={styles.cuentaBanner}>
-          <Text style={styles.cuentaTitulo}>Únete a Aurea</Text>
-          <Text style={styles.cuentaDesc}>Crea tu cuenta y lleva el seguimiento de tus piezas y certificados.</Text>
+          <Text style={styles.cuentaTitulo}>{t.home.uneteTitulo}</Text>
+          <Text style={styles.cuentaDesc}>{t.home.uneteDesc}</Text>
           <TouchableOpacity style={styles.cuentaBtn} onPress={() => navigation.navigate("PerfilTab")}>
-            <Text style={styles.cuentaBtnText}>CREAR CUENTA</Text>
+            <Text style={styles.cuentaBtnText}>{t.home.crearCuenta}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -195,8 +195,9 @@ const styles = StyleSheet.create({
   ofertaBtn: { backgroundColor: "#c9a96e", paddingVertical: 8, paddingHorizontal: 14, alignSelf: "flex-start", borderRadius: 4 },
   ofertaBtnText: { color: "#1c1c1c", fontSize: 11, fontWeight: "700", letterSpacing: 1 },
   ofertaRight: { width: 80, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(201,169,110,0.15)", padding: 12 },
-ofertaPorcentaje: { color: "#c9a96e", fontSize: 24, fontWeight: "800" },
-ofertaDscto: { color: "#c9a96e", fontSize: 10, letterSpacing: 1.5, fontWeight: "700" },
+  ofertaEmoji: { fontSize: 28, marginBottom: 4 },
+  ofertaPorcentaje: { color: "#c9a96e", fontSize: 24, fontWeight: "800" },
+  ofertaDscto: { color: "#c9a96e", fontSize: 10, letterSpacing: 1.5, fontWeight: "700" },
 
   // Secciones
   section: { padding: 28 },

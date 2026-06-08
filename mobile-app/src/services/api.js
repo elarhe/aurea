@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "http://192.168.1.148:4000/api/v1";
+const BASE_URL = "http://192.168.1.16:4000/api/v1";
 // IMPORTANTE: cambia TU_IP por tu IP local (ej: 192.168.1.50)
 // Para ver tu IP ejecuta: ipconfig en Windows
 

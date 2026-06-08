@@ -5,11 +5,13 @@ import {
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 import { useCarrito } from "../context/CarritoContext";
+import { useIdioma } from "../i18n/IdiomaContext";
 import api from "../services/api";
 
 export default function CarritoScreen({ navigation }) {
   const { cliente } = useAuth();
   const { items, subtotal, totalItems, cargando, cambiarCantidad, vaciar } = useCarrito();
+  const { t } = useIdioma();
   const [comprando, setComprando] = useState(false);
 
   const finalizarCompra = async () => {
@@ -38,12 +40,12 @@ export default function CarritoScreen({ navigation }) {
         payment: { provider: "manual", status: "paid" },
       });
       await vaciar();
-      Alert.alert("✓ Pedido realizado", "Tu pedido se ha realizado correctamente.", [
-        { text: "Ver pedidos", onPress: () => navigation.navigate("PerfilTab") },
-        { text: "Seguir comprando", onPress: () => navigation.navigate("CatalogoTab") },
+      Alert.alert(t.carrito.pedidoRealizado, t.carrito.pedidoDesc, [
+        { text: t.carrito.verPedidos, onPress: () => navigation.navigate("PerfilTab") },
+        { text: t.carrito.seguirComprando, onPress: () => navigation.navigate("CatalogoTab") },
       ]);
     } catch (e) {
-      Alert.alert("Error", e.response?.data?.mensaje || e.response?.data?.message || "No se pudo procesar el pedido.");
+      Alert.alert("Error", e.response?.data?.mensaje || e.response?.data?.message || t.carrito.error);
     } finally {
       setComprando(false);
     }
@@ -53,10 +55,10 @@ export default function CarritoScreen({ navigation }) {
     return (
       <View style={styles.centered}>
         <Text style={styles.emptyEmoji}>🛍</Text>
-        <Text style={styles.emptyTitle}>Inicia sesión</Text>
-        <Text style={styles.emptyDesc}>Necesitas una cuenta para usar el carrito.</Text>
+        <Text style={styles.emptyTitle}>{t.carrito.loginTitulo}</Text>
+        <Text style={styles.emptyDesc}>{t.carrito.loginDesc}</Text>
         <TouchableOpacity style={styles.btn} onPress={() => navigation.navigate("PerfilTab")}>
-          <Text style={styles.btnText}>INICIAR SESIÓN</Text>
+          <Text style={styles.btnText}>{t.carrito.iniciarSesion}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -68,10 +70,10 @@ export default function CarritoScreen({ navigation }) {
     return (
       <View style={styles.centered}>
         <Text style={styles.emptyEmoji}>🛒</Text>
-        <Text style={styles.emptyTitle}>Tu cesta está vacía</Text>
-        <Text style={styles.emptyDesc}>Explora nuestra colección y añade tus piezas favoritas.</Text>
+        <Text style={styles.emptyTitle}>{t.carrito.vaciaTitulo}</Text>
+        <Text style={styles.emptyDesc}>{t.carrito.vaciaDesc}</Text>
         <TouchableOpacity style={styles.btn} onPress={() => navigation.navigate("CatalogoTab")}>
-          <Text style={styles.btnText}>IR A COMPRAR</Text>
+          <Text style={styles.btnText}>{t.carrito.irAComprar}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -126,15 +128,17 @@ export default function CarritoScreen({ navigation }) {
       />
       <View style={styles.footer}>
         <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>Subtotal ({totalItems} {totalItems === 1 ? "producto" : "productos"})</Text>
+          <Text style={styles.totalLabel}>
+            {t.carrito.subtotal} ({totalItems} {totalItems === 1 ? t.carrito.producto : t.carrito.productos})
+          </Text>
           <Text style={styles.totalValor}>{subtotal.toLocaleString("es-ES", { style: "currency", currency: "EUR" })}</Text>
         </View>
-        <Text style={styles.envioText}>Envío gratuito en todos los pedidos</Text>
+        <Text style={styles.envioText}>{t.carrito.envioGratis}</Text>
         <TouchableOpacity style={[styles.checkoutBtn, comprando && styles.btnDisabled]} onPress={finalizarCompra} disabled={comprando}>
-          {comprando ? <ActivityIndicator color="#fff" /> : <Text style={styles.checkoutBtnText}>FINALIZAR COMPRA</Text>}
+          {comprando ? <ActivityIndicator color="#fff" /> : <Text style={styles.checkoutBtnText}>{t.carrito.finalizarCompra}</Text>}
         </TouchableOpacity>
         <TouchableOpacity style={styles.seguirBtn} onPress={() => navigation.navigate("CatalogoTab")}>
-          <Text style={styles.seguirBtnText}>Seguir comprando</Text>
+          <Text style={styles.seguirBtnText}>{t.carrito.seguirComprando}</Text>
         </TouchableOpacity>
       </View>
     </View>

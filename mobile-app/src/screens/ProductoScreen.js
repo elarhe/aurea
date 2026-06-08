@@ -6,11 +6,13 @@ import {
 import { productosService } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { useCarrito } from "../context/CarritoContext";
+import { useIdioma } from "../i18n/IdiomaContext";
 
 export default function ProductoScreen({ route, navigation }) {
   const { slug, producto: productoInicial } = route.params;
   const { cliente } = useAuth();
   const { añadir } = useCarrito();
+  const { t } = useIdioma();
   const [producto, setProducto] = useState(productoInicial || null);
   const [cargando, setCargando] = useState(!productoInicial);
   const [variantSeleccionada, setVariantSeleccionada] = useState(null);
@@ -28,22 +30,22 @@ export default function ProductoScreen({ route, navigation }) {
 
   const añadirAlCarrito = async () => {
     if (!cliente) {
-      Alert.alert("Inicia sesión", "Necesitas iniciar sesión para añadir al carrito.", [
-        { text: "Cancelar", style: "cancel" },
-        { text: "Iniciar sesión", onPress: () => navigation.navigate("PerfilTab") },
+      Alert.alert(t.producto.loginRequerido, t.producto.loginDesc, [
+        { text: t.producto.cancelar, style: "cancel" },
+        { text: t.producto.iniciarSesion, onPress: () => navigation.navigate("PerfilTab") },
       ]);
       return;
     }
     if (producto?.variants?.length > 0 && !variantSeleccionada) {
-      Alert.alert("Selecciona talla", "Por favor selecciona una variante antes de añadir al carrito.");
+      Alert.alert(t.producto.seleccionaTalla, t.producto.seleccionaTallaDesc);
       return;
     }
     setAñadiendo(true);
     try {
       await añadir(producto._id || producto.id, variantSeleccionada?.sku || "default", 1);
-      Alert.alert("✓ Añadido", `${producto.name || producto.nombre} se añadió al carrito.`, [
-        { text: "Ver cesta", onPress: () => navigation.navigate("CarritoTab") },
-        { text: "Seguir comprando", style: "cancel" },
+      Alert.alert(t.producto.añadido, `${producto.name || producto.nombre} ${t.producto.añadidoDesc}`, [
+        { text: t.producto.verCesta, onPress: () => navigation.navigate("CarritoTab") },
+        { text: t.producto.seguirComprando, style: "cancel" },
       ]);
     } catch (e) {
       Alert.alert("Error", e.response?.data?.mensaje || "No se pudo añadir al carrito.");
@@ -87,13 +89,13 @@ export default function ProductoScreen({ route, navigation }) {
           {producto.certifiable && (
             <View style={styles.certBanner}>
               <Text style={styles.certIcon}>🛡</Text>
-              <Text style={styles.certText}>Esta prenda incluye certificado de autenticidad blockchain</Text>
+              <Text style={styles.certText}>{t.producto.certifiable}</Text>
             </View>
           )}
 
           {variantes.length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Talla / Color</Text>
+              <Text style={styles.sectionTitle}>{t.producto.talla}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {variantes.map((v) => (
                   <TouchableOpacity
@@ -105,7 +107,7 @@ export default function ProductoScreen({ route, navigation }) {
                     <Text style={[styles.variantText, variantSeleccionada?.sku === v.sku && styles.variantTextSelected, v.stock === 0 && styles.variantTextAgotado]}>
                       {v.size}{v.color ? ` · ${v.color}` : ""}
                     </Text>
-                    {v.stock === 0 && <Text style={styles.agotadoLabel}>Agotado</Text>}
+                    {v.stock === 0 && <Text style={styles.agotadoLabel}>{t.producto.agotado}</Text>}
                   </TouchableOpacity>
                 ))}
               </ScrollView>
@@ -114,14 +116,14 @@ export default function ProductoScreen({ route, navigation }) {
 
           {descripcion && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Descripción</Text>
+              <Text style={styles.sectionTitle}>{t.producto.descripcion}</Text>
               <Text style={styles.descripcion}>{descripcion}</Text>
             </View>
           )}
 
           {materiales.length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Materiales</Text>
+              <Text style={styles.sectionTitle}>{t.producto.materiales}</Text>
               <Text style={styles.descripcion}>{materiales.join(", ")}</Text>
             </View>
           )}
@@ -136,7 +138,7 @@ export default function ProductoScreen({ route, navigation }) {
           onPress={añadirAlCarrito}
           disabled={añadiendo}
         >
-          <Text style={styles.btnAñadirText}>{añadiendo ? "Añadiendo..." : "Añadir al carrito"}</Text>
+          <Text style={styles.btnAñadirText}>{añadiendo ? t.producto.añadiendo : t.producto.añadirCarrito}</Text>
         </TouchableOpacity>
       </View>
     </View>

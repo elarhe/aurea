@@ -3,7 +3,6 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
-
 import HomeScreen from "../screens/HomeScreen";
 import CatalogoScreen from "../screens/CatalogoScreen";
 import ProductoScreen from "../screens/ProductoScreen";
@@ -13,41 +12,27 @@ import PedidosScreen from "../screens/PedidosScreen";
 import ConfiguracionScreen from "../screens/ConfiguracionScreen";
 import { useAuth } from "../context/AuthContext";
 import { useCarrito } from "../context/CarritoContext";
+import { useIdioma } from "../i18n/IdiomaContext";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
-
-const HEADER_OPTS = {
-  headerStyle: { backgroundColor: "#fff", elevation: 0, shadowOpacity: 0 },
-  headerTintColor: "#1c1c1c",
-  headerTitleStyle: { fontWeight: "700" },
-};
+const HEADER_OPTS = { headerStyle: { backgroundColor: "#fff", elevation: 0, shadowOpacity: 0 }, headerTintColor: "#1c1c1c", headerTitleStyle: { fontWeight: "700" } };
 
 function UserHeaderBtn({ navigation }) {
   const { cliente } = useAuth();
   return (
     <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.navigate("PerfilTab")}>
-      {cliente ? (
-        <View style={styles.avatarSmall}>
-          <Text style={styles.avatarSmallText}>{(cliente.nombre || cliente.email || "?")[0].toUpperCase()}</Text>
-        </View>
-      ) : (
-        <Text style={{ fontSize: 22 }}>👤</Text>
-      )}
+      {cliente ? <View style={styles.avatarSmall}><Text style={styles.avatarSmallText}>{(cliente.nombre || cliente.email || "?")[0].toUpperCase()}</Text></View> : <Text style={{ fontSize: 22 }}>👤</Text>}
     </TouchableOpacity>
   );
 }
 
-function CarritoIcon({ color, focused }) {
+function CarritoIcon({ focused }) {
   const { totalItems } = useCarrito();
   return (
     <View>
       <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.4 }}>🛒</Text>
-      {totalItems > 0 && (
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{totalItems > 9 ? "9+" : totalItems}</Text>
-        </View>
-      )}
+      {totalItems > 0 && <View style={styles.badge}><Text style={styles.badgeText}>{totalItems > 9 ? "9+" : totalItems}</Text></View>}
     </View>
   );
 }
@@ -62,54 +47,44 @@ function HomeStack({ navigation: tabNav }) {
 }
 
 function CatalogoStack() {
+  const { t } = useIdioma();
   return (
     <Stack.Navigator screenOptions={HEADER_OPTS}>
-      <Stack.Screen name="Catálogo" component={CatalogoScreen} options={{ title: "Tienda" }} />
+      <Stack.Screen name="Catalogo" component={CatalogoScreen} options={{ title: t.nav.tienda }} />
       <Stack.Screen name="Producto" component={ProductoScreen} options={({ route }) => ({ title: route.params?.producto?.name || "Producto" })} />
     </Stack.Navigator>
   );
 }
 
 function CarritoStack() {
+  const { t } = useIdioma();
   return (
     <Stack.Navigator screenOptions={HEADER_OPTS}>
-      <Stack.Screen name="Cesta" component={CarritoScreen} options={{ title: "Mi cesta" }} />
+      <Stack.Screen name="Cesta" component={CarritoScreen} options={{ title: t.carrito.titulo }} />
     </Stack.Navigator>
   );
 }
 
 function PerfilStack() {
+  const { t } = useIdioma();
   return (
     <Stack.Navigator screenOptions={HEADER_OPTS}>
-      <Stack.Screen name="MiCuenta" component={PerfilScreen} options={{ title: "Mi cuenta" }} />
-      <Stack.Screen name="Pedidos" component={PedidosScreen} options={{ title: "Mis pedidos" }} />
-      <Stack.Screen name="Configuracion" component={ConfiguracionScreen} options={{ title: "Configuración" }} />
+      <Stack.Screen name="MiCuenta" component={PerfilScreen} options={{ title: t.perfil.miCuenta }} />
+      <Stack.Screen name="Pedidos" component={PedidosScreen} options={{ title: t.pedidos.titulo }} />
+      <Stack.Screen name="Configuracion" component={ConfiguracionScreen} options={{ title: t.config.titulo }} />
     </Stack.Navigator>
   );
 }
 
 export default function AppNavigator() {
+  const { t } = useIdioma();
   return (
     <NavigationContainer>
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          headerShown: false,
-          tabBarStyle: styles.tabBar,
-          tabBarActiveTintColor: "#1c1c1c",
-          tabBarInactiveTintColor: "#999",
-          tabBarLabelStyle: styles.tabLabel,
-          tabBarIcon: ({ focused, color }) => {
-            if (route.name === "HomeTab") return <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.4 }}>🏠</Text>;
-            if (route.name === "CatalogoTab") return <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.4 }}>🧥</Text>;
-            if (route.name === "CarritoTab") return <CarritoIcon focused={focused} color={color} />;
-            if (route.name === "PerfilTab") return <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.4 }}>👤</Text>;
-          },
-        })}
-      >
-        <Tab.Screen name="HomeTab" component={HomeStack} options={{ title: "Inicio" }} />
-        <Tab.Screen name="CatalogoTab" component={CatalogoStack} options={{ title: "Tienda" }} />
-        <Tab.Screen name="CarritoTab" component={CarritoStack} options={{ title: "Cesta" }} />
-        <Tab.Screen name="PerfilTab" component={PerfilStack} options={{ title: "Perfil" }} />
+      <Tab.Navigator screenOptions={({ route }) => ({ headerShown: false, tabBarStyle: styles.tabBar, tabBarActiveTintColor: "#1c1c1c", tabBarInactiveTintColor: "#999", tabBarLabelStyle: styles.tabLabel, tabBarIcon: ({ focused }) => { if (route.name === "HomeTab") return <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.4 }}>🏠</Text>; if (route.name === "CatalogoTab") return <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.4 }}>🧥</Text>; if (route.name === "CarritoTab") return <CarritoIcon focused={focused} />; if (route.name === "PerfilTab") return <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.4 }}>👤</Text>; } })}>
+        <Tab.Screen name="HomeTab" component={HomeStack} options={{ title: t.nav.inicio }} />
+        <Tab.Screen name="CatalogoTab" component={CatalogoStack} options={{ title: t.nav.tienda }} />
+        <Tab.Screen name="CarritoTab" component={CarritoStack} options={{ title: t.nav.cesta }} />
+        <Tab.Screen name="PerfilTab" component={PerfilStack} options={{ title: t.nav.perfil }} />
       </Tab.Navigator>
     </NavigationContainer>
   );

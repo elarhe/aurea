@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { pedidosService } from "../services/api";
+import { useIdioma } from "../i18n/IdiomaContext";
 
 const estadoColor = {
   pending: { bg: "#fef9c3", text: "#854d0e" },
@@ -12,12 +13,8 @@ const estadoColor = {
   refunded: { bg: "#f3f4f6", text: "#374151" },
 };
 
-const estadoLabel = {
-  pending: "Pendiente", paid: "Pagado", processing: "Procesando",
-  shipped: "Enviado", delivered: "Entregado", cancelled: "Cancelado", refunded: "Reembolsado",
-};
-
 export default function PedidosScreen({ navigation }) {
+  const { t } = useIdioma();
   const [pedidos, setPedidos] = useState([]);
   const [cargando, setCargando] = useState(true);
 
@@ -37,10 +34,10 @@ export default function PedidosScreen({ navigation }) {
     return (
       <View style={styles.centered}>
         <Text style={styles.emptyEmoji}>📦</Text>
-        <Text style={styles.emptyTitle}>Sin pedidos aún</Text>
-        <Text style={styles.emptyDesc}>Cuando realices tu primera compra aparecerá aquí.</Text>
+        <Text style={styles.emptyTitle}>{t.pedidos.sinPedidos}</Text>
+        <Text style={styles.emptyDesc}>{t.pedidos.sinPedidosDesc}</Text>
         <TouchableOpacity style={styles.btn} onPress={() => navigation.navigate("CatalogoTab")}>
-          <Text style={styles.btnText}>EXPLORAR TIENDA</Text>
+          <Text style={styles.btnText}>{t.pedidos.explorar}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -62,13 +59,15 @@ export default function PedidosScreen({ navigation }) {
           </View>
           <View style={[styles.estadoBadge, { backgroundColor: colores.bg }]}>
             <Text style={[styles.estadoText, { color: colores.text }]}>
-              {estadoLabel[estado] || estado}
+              {t.pedidos.estados[estado] || estado}
             </Text>
           </View>
         </View>
 
         <View style={styles.pedidoInfo}>
-          <Text style={styles.pedidoItems}>{numItems} {numItems === 1 ? "producto" : "productos"}</Text>
+          <Text style={styles.pedidoItems}>
+            {numItems} {numItems === 1 ? t.carrito.producto : t.carrito.productos}
+          </Text>
           <Text style={styles.pedidoTotal}>
             {total.toLocaleString("es-ES", { style: "currency", currency: "EUR" })}
           </Text>

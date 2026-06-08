@@ -4,21 +4,23 @@ import {
   StyleSheet, TextInput, ActivityIndicator, RefreshControl
 } from "react-native";
 import { productosService } from "../services/api";
-
-const TABS = [
-  { label: "Todo", value: "" },
-  { label: "Mujer", value: "mujer" },
-  { label: "Hombre", value: "hombre" },
-  { label: "Accesorios", value: "accesorios" },
-];
+import { useIdioma } from "../i18n/IdiomaContext";
 
 export default function CatalogoScreen({ navigation }) {
+  const { t } = useIdioma();
   const [productos, setProductos] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [tabActivo, setTabActivo] = useState("");
   const [cargando, setCargando] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [total, setTotal] = useState(0);
+
+  const TABS = [
+    { label: t.catalogo.todo, value: "" },
+    { label: t.home.mujer, value: "mujer" },
+    { label: t.home.hombre, value: "hombre" },
+    { label: t.home.accesorios, value: "accesorios" },
+  ];
 
   const cargar = useCallback(async () => {
     try {
@@ -38,8 +40,8 @@ export default function CatalogoScreen({ navigation }) {
   }, [busqueda, tabActivo]);
 
   useEffect(() => {
-    const t = setTimeout(cargar, 300);
-    return () => clearTimeout(t);
+    const timer = setTimeout(cargar, 300);
+    return () => clearTimeout(timer);
   }, [cargar]);
 
   const onRefresh = () => { setRefreshing(true); cargar(); };
@@ -96,7 +98,7 @@ export default function CatalogoScreen({ navigation }) {
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
             style={styles.searchInput}
-            placeholder="Buscar en Aurea..."
+            placeholder={t.catalogo.buscar}
             placeholderTextColor="#aaa"
             value={busqueda}
             onChangeText={setBusqueda}
@@ -124,7 +126,7 @@ export default function CatalogoScreen({ navigation }) {
         ))}
       </View>
 
-      <Text style={styles.resultados}>{total} piezas</Text>
+      <Text style={styles.resultados}>{total} {t.catalogo.piezas}</Text>
 
       {cargando ? (
         <ActivityIndicator color="#1c1c1c" style={{ marginTop: 40 }} />
@@ -140,7 +142,7 @@ export default function CatalogoScreen({ navigation }) {
           ListEmptyComponent={
             <View style={styles.vacio}>
               <Text style={styles.vacioEmoji}>🔍</Text>
-              <Text style={styles.vacioText}>No se encontraron productos</Text>
+              <Text style={styles.vacioText}>{t.catalogo.sinResultados}</Text>
             </View>
           }
         />

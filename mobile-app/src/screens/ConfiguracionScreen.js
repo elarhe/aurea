@@ -1,13 +1,13 @@
 import React, { useState } from "react";
-import {
-  View, Text, TextInput, TouchableOpacity,
-  StyleSheet, ScrollView, Alert, ActivityIndicator
-} from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from "react-native";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import { useIdioma } from "../i18n/IdiomaContext";
 
 export default function ConfiguracionScreen() {
   const { cliente, logout, actualizarCliente } = useAuth();
+  const { t, idioma, cambiarIdioma } = useIdioma();
+  const c = t.config;
 
   const [seccion, setSeccion] = useState(null);
   const [firstName, setFirstName] = useState(cliente?.nombre?.split(" ")[0] || "");
@@ -16,63 +16,57 @@ export default function ConfiguracionScreen() {
   const [passwordActual, setPasswordActual] = useState("");
   const [passwordNueva, setPasswordNueva] = useState("");
   const [passwordConfirmar, setPasswordConfirmar] = useState("");
-  const [idiomaSeleccionado, setIdiomaSeleccionado] = useState(cliente?.preferredLanguage || "es");
+  const [idiomaSeleccionado, setIdiomaSeleccionado] = useState(idioma);
   const [cargando, setCargando] = useState(false);
 
   const idiomaNombre = { es: "Español", en: "English", uk: "Українська" };
 
   const opciones = [
-    { id: "nombre", label: "Nombre y apellido", valor: cliente?.nombre || "—", icon: "👤" },
-    { id: "email", label: "Email", valor: cliente?.email || "—", icon: "✉️" },
-    { id: "password", label: "Contraseña", valor: "••••••••", icon: "🔒" },
-    { id: "idioma", label: "Idioma", valor: idiomaNombre[cliente?.preferredLanguage || "es"], icon: "🌍" },
+    { id: "nombre", label: c.nombreApellido, valor: cliente?.nombre || "—", icon: "👤" },
+    { id: "email", label: c.emailLabel, valor: cliente?.email || "—", icon: "✉️" },
+    { id: "password", label: c.passwordLabel, valor: "••••••••", icon: "🔒" },
+    { id: "idioma", label: c.idiomaLabel, valor: idiomaNombre[idioma], icon: "🌍" },
   ];
 
   const guardarNombre = async () => {
-    if (!firstName.trim()) { Alert.alert("Error", "El nombre no puede estar vacío"); return; }
+    if (!firstName.trim()) { Alert.alert("Error", c.nombreVacio); return; }
     setCargando(true);
     try {
       await api.put("/users/me", { firstName: firstName.trim(), lastName: lastName.trim() });
       await actualizarCliente({ nombre: `${firstName.trim()} ${lastName.trim()}`.trim() });
-      Alert.alert("✓ Guardado", "Nombre actualizado correctamente");
+      Alert.alert(c.guardado, c.nombreGuardado);
       setSeccion(null);
     } catch (e) {
-      Alert.alert("Error", e.response?.data?.mensaje || "No se pudo guardar");
-    } finally {
-      setCargando(false);
-    }
+      Alert.alert("Error", e.response?.data?.mensaje || c.error);
+    } finally { setCargando(false); }
   };
 
   const guardarEmail = async () => {
-    if (!email.trim() || !email.includes("@")) { Alert.alert("Error", "Email no válido"); return; }
+    if (!email.trim() || !email.includes("@")) { Alert.alert("Error", c.emailInvalido); return; }
     setCargando(true);
     try {
       await api.put("/users/me", { email: email.trim().toLowerCase() });
       await actualizarCliente({ email: email.trim().toLowerCase() });
-      Alert.alert("✓ Guardado", "Email actualizado correctamente");
+      Alert.alert(c.guardado, c.emailGuardado);
       setSeccion(null);
     } catch (e) {
-      Alert.alert("Error", e.response?.data?.mensaje || "No se pudo guardar");
-    } finally {
-      setCargando(false);
-    }
+      Alert.alert("Error", e.response?.data?.mensaje || c.error);
+    } finally { setCargando(false); }
   };
 
   const guardarPassword = async () => {
     if (!passwordActual || !passwordNueva) { Alert.alert("Error", "Rellena todos los campos"); return; }
-    if (passwordNueva.length < 8) { Alert.alert("Error", "La nueva contraseña debe tener al menos 8 caracteres"); return; }
-    if (passwordNueva !== passwordConfirmar) { Alert.alert("Error", "Las contraseñas no coinciden"); return; }
+    if (passwordNueva.length < 8) { Alert.alert("Error", c.passwordCorta); return; }
+    if (passwordNueva !== passwordConfirmar) { Alert.alert("Error", c.passwordNoCoincide); return; }
     setCargando(true);
     try {
       await api.patch("/users/password", { passwordActual, nuevaPassword: passwordNueva });
-      Alert.alert("✓ Guardado", "Contraseña actualizada correctamente");
+      Alert.alert(c.guardado, c.passwordGuardado);
       setPasswordActual(""); setPasswordNueva(""); setPasswordConfirmar("");
       setSeccion(null);
     } catch (e) {
-      Alert.alert("Error", e.response?.data?.mensaje || "Contraseña actual incorrecta");
-    } finally {
-      setCargando(false);
-    }
+      Alert.alert("Error", e.response?.data?.mensaje || c.passwordError);
+    } finally { setCargando(false); }
   };
 
   const guardarIdioma = async () => {
@@ -80,25 +74,19 @@ export default function ConfiguracionScreen() {
     try {
       await api.put("/users/me", { preferredLanguage: idiomaSeleccionado });
       await actualizarCliente({ preferredLanguage: idiomaSeleccionado });
-      Alert.alert("✓ Guardado", "Idioma actualizado correctamente");
+      cambiarIdioma(idiomaSeleccionado);
+      Alert.alert(c.guardado, c.idiomaGuardado);
       setSeccion(null);
     } catch (e) {
-      Alert.alert("Error", e.response?.data?.mensaje || "No se pudo guardar");
-    } finally {
-      setCargando(false);
-    }
+      Alert.alert("Error", e.response?.data?.mensaje || c.error);
+    } finally { setCargando(false); }
   };
 
   return (
     <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
-
       <View style={styles.seccionCard}>
         {opciones.map((op, i) => (
-          <TouchableOpacity
-            key={op.id}
-            style={[styles.opcion, i < opciones.length - 1 && styles.opcionBorder]}
-            onPress={() => setSeccion(seccion === op.id ? null : op.id)}
-          >
+          <TouchableOpacity key={op.id} style={[styles.opcion, i < opciones.length - 1 && styles.opcionBorder]} onPress={() => setSeccion(seccion === op.id ? null : op.id)}>
             <Text style={styles.opcionIcon}>{op.icon}</Text>
             <View style={styles.opcionInfo}>
               <Text style={styles.opcionLabel}>{op.label}</Text>
@@ -109,98 +97,57 @@ export default function ConfiguracionScreen() {
         ))}
       </View>
 
-      {/* Nombre */}
       {seccion === "nombre" && (
         <View style={styles.form}>
-          <Text style={styles.formTitle}>Cambiar nombre</Text>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>NOMBRE</Text>
-            <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="Tu nombre" placeholderTextColor="#bbb" />
-          </View>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>APELLIDO</Text>
-            <TextInput style={styles.input} value={lastName} onChangeText={setLastName} placeholder="Tu apellido" placeholderTextColor="#bbb" />
-          </View>
+          <Text style={styles.formTitle}>{c.cambiarNombre}</Text>
+          <View style={styles.inputGroup}><Text style={styles.label}>{c.nombreField}</Text><TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="Tu nombre" placeholderTextColor="#bbb" /></View>
+          <View style={styles.inputGroup}><Text style={styles.label}>{c.apellidoField}</Text><TextInput style={styles.input} value={lastName} onChangeText={setLastName} placeholder="Tu apellido" placeholderTextColor="#bbb" /></View>
           <TouchableOpacity style={[styles.btn, cargando && styles.btnDisabled]} onPress={guardarNombre} disabled={cargando}>
-            {cargando ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>GUARDAR</Text>}
+            {cargando ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>{c.guardar}</Text>}
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Email */}
       {seccion === "email" && (
         <View style={styles.form}>
-          <Text style={styles.formTitle}>Cambiar email</Text>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>NUEVO EMAIL</Text>
-            <TextInput style={styles.input} value={email} onChangeText={setEmail} placeholder="tu@email.com" placeholderTextColor="#bbb" keyboardType="email-address" autoCapitalize="none" />
-          </View>
+          <Text style={styles.formTitle}>{c.cambiarEmail}</Text>
+          <View style={styles.inputGroup}><Text style={styles.label}>{c.emailField}</Text><TextInput style={styles.input} value={email} onChangeText={setEmail} placeholder="tu@email.com" placeholderTextColor="#bbb" keyboardType="email-address" autoCapitalize="none" /></View>
           <TouchableOpacity style={[styles.btn, cargando && styles.btnDisabled]} onPress={guardarEmail} disabled={cargando}>
-            {cargando ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>GUARDAR</Text>}
+            {cargando ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>{c.guardar}</Text>}
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Contraseña */}
       {seccion === "password" && (
         <View style={styles.form}>
-          <Text style={styles.formTitle}>Cambiar contraseña</Text>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>CONTRASEÑA ACTUAL</Text>
-            <TextInput style={styles.input} value={passwordActual} onChangeText={setPasswordActual} placeholder="••••••••" placeholderTextColor="#bbb" secureTextEntry />
-          </View>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>NUEVA CONTRASEÑA</Text>
-            <TextInput style={styles.input} value={passwordNueva} onChangeText={setPasswordNueva} placeholder="Mínimo 8 caracteres" placeholderTextColor="#bbb" secureTextEntry />
-          </View>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>CONFIRMAR CONTRASEÑA</Text>
-            <TextInput style={styles.input} value={passwordConfirmar} onChangeText={setPasswordConfirmar} placeholder="Repite la contraseña" placeholderTextColor="#bbb" secureTextEntry />
-          </View>
+          <Text style={styles.formTitle}>{c.cambiarPassword}</Text>
+          <View style={styles.inputGroup}><Text style={styles.label}>{c.passwordActual}</Text><TextInput style={styles.input} value={passwordActual} onChangeText={setPasswordActual} placeholder="••••••••" placeholderTextColor="#bbb" secureTextEntry /></View>
+          <View style={styles.inputGroup}><Text style={styles.label}>{c.passwordNueva}</Text><TextInput style={styles.input} value={passwordNueva} onChangeText={setPasswordNueva} placeholder="Min. 8" placeholderTextColor="#bbb" secureTextEntry /></View>
+          <View style={styles.inputGroup}><Text style={styles.label}>{c.passwordConfirmar}</Text><TextInput style={styles.input} value={passwordConfirmar} onChangeText={setPasswordConfirmar} placeholder="••••••••" placeholderTextColor="#bbb" secureTextEntry /></View>
           <TouchableOpacity style={[styles.btn, cargando && styles.btnDisabled]} onPress={guardarPassword} disabled={cargando}>
-            {cargando ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>GUARDAR</Text>}
+            {cargando ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>{c.guardar}</Text>}
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Idioma */}
       {seccion === "idioma" && (
         <View style={styles.form}>
-          <Text style={styles.formTitle}>Idioma de la app</Text>
-          {[
-            { val: "es", label: "🇪🇸  Español" },
-            { val: "en", label: "🇬🇧  English" },
-            { val: "uk", label: "🇺🇦  Українська" },
-          ].map((lang) => (
-            <TouchableOpacity
-              key={lang.val}
-              style={[styles.idiomaOpcion, idiomaSeleccionado === lang.val && styles.idiomaOpcionSelected]}
-              onPress={() => setIdiomaSeleccionado(lang.val)}
-            >
-              <Text style={[styles.idiomaLabel, idiomaSeleccionado === lang.val && styles.idiomaLabelSelected]}>
-                {lang.label}
-              </Text>
-              {idiomaSeleccionado === lang.val && (
-                <Text style={styles.idiomaCheck}>✓</Text>
-              )}
+          <Text style={styles.formTitle}>{c.idiomaApp}</Text>
+          {[{ val: "es", label: "🇪🇸  Español" }, { val: "en", label: "🇬🇧  English" }, { val: "uk", label: "🇺🇦  Українська" }].map((lang) => (
+            <TouchableOpacity key={lang.val} style={[styles.idiomaOpcion, idiomaSeleccionado === lang.val && styles.idiomaOpcionSelected]} onPress={() => setIdiomaSeleccionado(lang.val)}>
+              <Text style={[styles.idiomaLabel, idiomaSeleccionado === lang.val && styles.idiomaLabelSelected]}>{lang.label}</Text>
+              {idiomaSeleccionado === lang.val && <Text style={styles.idiomaCheck}>✓</Text>}
             </TouchableOpacity>
           ))}
           <TouchableOpacity style={[styles.btn, { marginTop: 16 }, cargando && styles.btnDisabled]} onPress={guardarIdioma} disabled={cargando}>
-            {cargando ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>GUARDAR</Text>}
+            {cargando ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>{c.guardar}</Text>}
           </TouchableOpacity>
         </View>
       )}
 
-      <TouchableOpacity
-        style={styles.logoutBtn}
-        onPress={() => Alert.alert("Cerrar sesión", "¿Seguro que quieres cerrar sesión?", [
-          { text: "Cancelar", style: "cancel" },
-          { text: "Cerrar sesión", style: "destructive", onPress: logout },
-        ])}
-      >
-        <Text style={styles.logoutText}>Cerrar sesión</Text>
+      <TouchableOpacity style={styles.logoutBtn} onPress={() => Alert.alert(c.cerrarSesion, c.cerrarSesionConfirm, [{ text: c.cancelar, style: "cancel" }, { text: c.cerrarSesion, style: "destructive", onPress: logout }])}>
+        <Text style={styles.logoutText}>{c.cerrarSesion}</Text>
       </TouchableOpacity>
-
       <View style={{ height: 40 }} />
     </ScrollView>
   );
