@@ -1,11 +1,8 @@
 import axios from "axios";
 
-
 const BASE_URL = "https://scarf-amenity-gents.ngrok-free.dev/api/v1";
 // const BASE_URL = "http://192.168.1.148:4000/api/v1"; //oficina
 // const BASE_URL = "http://192.168.1.16:4000/api/v1"; //xata
-// IMPORTANTE: cambia TU_IP por tu IP local (ej: 192.168.1.50)
-// Para ver tu IP ejecuta: ipconfig en Windows
 
 const api = axios.create({ baseURL: BASE_URL, timeout: 10000 });
 
@@ -30,8 +27,8 @@ export const productosService = {
     if (lang && lang !== "es") params = { ...params, lang };
     return api.get("/products", { params });
   },
-  getBySlug: (slug, lang) => api.get(`/products/${slug}`, { 
-  params: lang && lang !== "es" ? { lang } : {} 
+  getBySlug: (slug, lang) => api.get(`/products/${slug}`, {
+    params: lang && lang !== "es" ? { lang } : {}
   }),
 };
 
@@ -60,6 +57,14 @@ export const pedidosService = {
 export const certificadosService = {
   getMios: () => api.get("/certificates/my"),
   verificar: (slug) => api.get(`/certificates/verify/${slug}`),
+};
+
+// ── Reseñas ───────────────────────────────────────────────────────
+export const reseñasService = {
+  listar: (productId, page = 1) =>
+    api.get(`/reviews/${productId}/reviews`, { params: { page, limit: 10 } }),
+  crear: (productId, rating, title, comment) =>
+    api.post("/reviews", { productId, rating, title, comment }),
 };
 
 export default api;

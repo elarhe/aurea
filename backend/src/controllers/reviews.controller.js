@@ -50,7 +50,7 @@ const crear = async (req, res) => {
     // Verificar compra del producto
     const pedidoConProducto = await Order.findOne({
       user: req.usuario.id,
-      status: { $in: ["delivered", "shipped"] },
+      status: { $in: ["delivered", "shipped", "paid", "processing"] },
       "items.product": productId,
     });
 
@@ -62,10 +62,10 @@ const crear = async (req, res) => {
     }
 
     // Verificar si ya hay review de este usuario para este producto
-    const reviewExistente = await Review.findOne({ product: productId, user: req.usuario.id });
-    if (reviewExistente) {
-      return res.status(409).json({ ok: false, mensaje: "Ya has escrito una reseña para este producto" });
-    }
+    // const reviewExistente = await Review.findOne({ product: productId, user: req.usuario.id });
+    // if (reviewExistente) {
+    //   return res.status(409).json({ ok: false, mensaje: "Ya has escrito una reseña para este producto" });
+    // }
 
     const review = new Review({
       product: productId,
@@ -199,4 +199,33 @@ const eliminar = async (req, res) => {
   }
 };
 
-module.exports = { listarPorProducto, crear, aprobar, rechazar, responder, eliminar };
+const listarTodas = async (req, res) => {
+  try {
+    const { page = 1, limit = 50, approved } = req.query;
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
+
+    const filtro = {};
+    if (approved === "true") filtro.isApproved = true;
+    if (approved === "false") filtro.isApproved = false;
+
+    const [reviews, total] = await Promise.all([
+      Review.find(filtro)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .populate("user", "firstName lastName email")
+        .populate("product", "name slug")
+        .lean(),
+      Review.countDocuments(filtro),
+    ]);
+
+    return res.json({ ok: true, total, page: pageNum, reviews });
+  } catch (error) {
+    console.error("[reviews.listarTodas]", error);
+    return res.status(500).json({ ok: false, mensaje: "Error interno" });
+  }
+};
+
+module.exports = { listarPorProducto, listarTodas, crear, aprobar, rechazar, responder, eliminar };

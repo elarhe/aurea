@@ -7,6 +7,7 @@ const navItems = [
   { id: "empleados", label: "Empleados", icon: "◉" },
   { id: "certificados", label: "Certificados", icon: "🛡" },
   { id: "clientes", label: "Clientes", icon: "◎" },
+  { id: "reseñas", label: "Reseñas", icon: "★" },
 ];
 
 export default function Sidebar({ active, onNav, onLogout }) {

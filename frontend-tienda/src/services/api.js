@@ -71,10 +71,10 @@ export const certificadosService = {
 
 // ── Reseñas ───────────────────────────────────────────────────────────────────
 export const reseñasService = {
-  getByProducto: (productId, params = {}) =>
-    api.get(`/products/${productId}/reviews`, { params }).then((r) => r.data),
-  crear: (productId, data) =>
-    api.post(`/products/${productId}/reviews`, data).then((r) => r.data),
+  listar: (productId, page = 1) =>
+    api.get(`/reviews/${productId}/reviews`, { params: { page, limit: 10 } }),
+  crear: (productId, rating, title, comment) =>
+    api.post("/reviews", { productId, rating, title, comment }),
 };
 
 // ── Usuarios ──────────────────────────────────────────────────────────────────
