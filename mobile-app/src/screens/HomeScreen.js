@@ -12,19 +12,20 @@ const HERO_IMAGE = "https://images.unsplash.com/photo-1490481651871-ab68de25d43d
 
 export default function HomeScreen({ navigation }) {
   const { cliente } = useAuth();
-  const { t } = useIdioma();
+  const { t, idioma } = useIdioma();
   const [productos, setProductos] = useState([]);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
-    productosService.getAll({ limit: 6, sort: "featured" })
+    setCargando(true);
+    productosService.getAll({ limit: 6, sort: "featured", lang: global.aureaLang || "es" })
       .then((res) => {
         const data = res.data;
         setProductos(data.productos || data.products || data.data || []);
       })
       .catch((e) => console.log("Error:", e.message))
       .finally(() => setCargando(false));
-  }, []);
+  }, [idioma]);
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -93,7 +94,7 @@ export default function HomeScreen({ navigation }) {
               <TouchableOpacity
                 key={p._id || p.id}
                 style={styles.productoCard}
-                onPress={() => navigation.navigate("HomeStack", { screen: "Producto", params: { slug: p.slug, producto: p } })}
+                onPress={() => navigation.navigate("Producto", { slug: p.slug, producto: p })}
                 activeOpacity={0.85}
               >
                 {p.coverImage ? (
@@ -104,9 +105,12 @@ export default function HomeScreen({ navigation }) {
                   </View>
                 )}
                 <Text style={styles.productoCategoria}>
-                  {typeof (p.category || p.categoria) === "object"
-                    ? (p.category || p.categoria)?.name
-                    : (p.category || p.categoria) || ""}
+                  {(() => {
+                    const cat = typeof (p.category || p.categoria) === "object"
+                      ? (p.category || p.categoria)?.name
+                      : (p.category || p.categoria) || "";
+                    return { mujer: t.home.mujer, hombre: t.home.hombre, accesorios: t.home.accesorios }[cat?.toLowerCase()] || cat;
+                  })()}
                 </Text>
                 <Text style={styles.productoNombre} numberOfLines={2}>{p.name || p.nombre}</Text>
                 <Text style={styles.productoPrecio}>
@@ -197,7 +201,7 @@ const styles = StyleSheet.create({
   ofertaRight: { width: 80, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(201,169,110,0.15)", padding: 12 },
   ofertaEmoji: { fontSize: 28, marginBottom: 4 },
   ofertaPorcentaje: { color: "#c9a96e", fontSize: 24, fontWeight: "800" },
-  ofertaDscto: { color: "#c9a96e", fontSize: 10, letterSpacing: 1.5, fontWeight: "700" },
+  ofertaDscto: { color: "#c9a96e", fontSize: 9, letterSpacing: 1.3, fontWeight: "700", textAlign: "center" },
 
   // Secciones
   section: { padding: 28 },

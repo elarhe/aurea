@@ -25,9 +25,15 @@ const variantSchema = new Schema(
 const productSchema = new Schema(
   {
     name: { type: String, required: true, trim: true, maxlength: 200 },
+    name_en: { type: String, trim: true },
+    name_uk: { type: String, trim: true },
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
     description: { type: String, required: true },
+    description_en: { type: String, trim: true },
+    description_uk: { type: String, trim: true },
     shortDescription: { type: String, trim: true, maxlength: 280 },
+    shortDescription_en: { type: String, trim: true },
+    shortDescription_uk: { type: String, trim: true },
 
     brand: { type: String, trim: true, default: "Aurea" },
     category: { type: Schema.Types.ObjectId, ref: "Category", required: true, index: true },

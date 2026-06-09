@@ -17,6 +17,7 @@ export default function PedidosScreen({ navigation }) {
   const { t } = useIdioma();
   const [pedidos, setPedidos] = useState([]);
   const [cargando, setCargando] = useState(true);
+  const [expandido, setExpandido] = useState(null);
 
   useEffect(() => {
     pedidosService.getMios()
@@ -49,6 +50,7 @@ export default function PedidosScreen({ navigation }) {
     const fecha = p.createdAt ? new Date(p.createdAt).toLocaleDateString("es-ES") : "—";
     const total = p.total || 0;
     const numItems = p.items?.length || 0;
+    const estaExpandido = expandido === (p._id || p.id);
 
     return (
       <View style={styles.pedidoCard}>
@@ -65,21 +67,45 @@ export default function PedidosScreen({ navigation }) {
         </View>
 
         <View style={styles.pedidoInfo}>
-          <Text style={styles.pedidoItems}>
-            {numItems} {numItems === 1 ? t.carrito.producto : t.carrito.productos}
-          </Text>
           <Text style={styles.pedidoTotal}>
             {total.toLocaleString("es-ES", { style: "currency", currency: "EUR" })}
           </Text>
         </View>
 
-        {p.items?.slice(0, 2).map((item, i) => (
-          <Text key={i} style={styles.pedidoProducto} numberOfLines={1}>
-            · {item.productName || item.name || "Producto"}
+        {/* Productos expandibles */}
+        <TouchableOpacity
+          style={styles.expandirBtn}
+          onPress={() => setExpandido(estaExpandido ? null : (p._id || p.id))}
+        >
+          <Text style={styles.pedidoItems}>
+            {numItems} {numItems === 1 ? t.carrito.producto : t.carrito.productos}
           </Text>
-        ))}
-        {p.items?.length > 2 && (
-          <Text style={styles.pedidoMas}>+{p.items.length - 2} más</Text>
+          <Text style={styles.expandirArrow}>{estaExpandido ? "▲" : "▼"}</Text>
+        </TouchableOpacity>
+
+        {estaExpandido && (
+          <View style={styles.itemsLista}>
+            {p.items?.map((item, i) => (
+              <View key={i} style={styles.itemRow}>
+                <Text style={styles.itemNombre} numberOfLines={2}>
+                  · {item.productName || item.name || "Producto"}
+                  {item.variantSku ? ` (${item.variantSku})` : ""}
+                </Text>
+                <View style={styles.itemDetalle}>
+                  <Text style={styles.itemCantidad}>x{item.quantity || 1}</Text>
+                  <Text style={styles.itemPrecio}>
+                    {(item.unitPrice || 0).toLocaleString("es-ES", { style: "currency", currency: "EUR" })}
+                  </Text>
+                </View>
+              </View>
+            ))}
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Total</Text>
+              <Text style={styles.totalValor}>
+                {total.toLocaleString("es-ES", { style: "currency", currency: "EUR" })}
+              </Text>
+            </View>
+          </View>
         )}
       </View>
     );
@@ -105,14 +131,23 @@ const styles = StyleSheet.create({
   btnText: { color: "#fff", fontSize: 12, fontWeight: "700", letterSpacing: 2 },
   lista: { padding: 16, backgroundColor: "#f5f5f5" },
   pedidoCard: { backgroundColor: "#fff", borderRadius: 12, padding: 16 },
-  pedidoHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 },
+  pedidoHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 },
   pedidoNumero: { fontSize: 15, fontWeight: "700", color: "#1c1c1c" },
   pedidoFecha: { fontSize: 12, color: "#999", marginTop: 2 },
   estadoBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   estadoText: { fontSize: 11, fontWeight: "600" },
-  pedidoInfo: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
+  pedidoInfo: { marginBottom: 10 },
+  pedidoTotal: { fontSize: 16, fontWeight: "700", color: "#1c1c1c" },
+  expandirBtn: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 8, borderTopWidth: 1, borderTopColor: "#f0f0f0" },
   pedidoItems: { fontSize: 13, color: "#666" },
-  pedidoTotal: { fontSize: 15, fontWeight: "700", color: "#1c1c1c" },
-  pedidoProducto: { fontSize: 12, color: "#999", marginBottom: 2 },
-  pedidoMas: { fontSize: 12, color: "#c9a96e", marginTop: 2 },
+  expandirArrow: { fontSize: 12, color: "#999" },
+  itemsLista: { marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: "#f5f5f5" },
+  itemRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 },
+  itemNombre: { flex: 1, fontSize: 13, color: "#1c1c1c", marginRight: 8 },
+  itemDetalle: { flexDirection: "row", gap: 8, alignItems: "center" },
+  itemCantidad: { fontSize: 12, color: "#999" },
+  itemPrecio: { fontSize: 13, fontWeight: "600", color: "#1c1c1c" },
+  totalRow: { flexDirection: "row", justifyContent: "space-between", paddingTop: 8, borderTopWidth: 1, borderTopColor: "#f0f0f0", marginTop: 4 },
+  totalLabel: { fontSize: 13, fontWeight: "700", color: "#1c1c1c" },
+  totalValor: { fontSize: 14, fontWeight: "700", color: "#1c1c1c" },
 });

@@ -53,6 +53,7 @@ export default function CatalogoScreen({ navigation }) {
     const categoria = typeof (p.category || p.categoria) === "object"
       ? (p.category || p.categoria)?.name
       : (p.category || p.categoria);
+    const catTraducida = { mujer: t.home.mujer, hombre: t.home.hombre, accesorios: t.home.accesorios }[categoria?.toLowerCase()] || categoria;
 
     return (
       <TouchableOpacity
@@ -73,7 +74,7 @@ export default function CatalogoScreen({ navigation }) {
           </View>
         )}
         <View style={styles.cardInfo}>
-          {categoria && <Text style={styles.categoria}>{categoria}</Text>}
+          {catTraducida && <Text style={styles.categoria}>{catTraducida}</Text>}
           <Text style={styles.nombre} numberOfLines={2}>{nombre}</Text>
           <View style={styles.precioRow}>
             <Text style={styles.precio}>

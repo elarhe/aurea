@@ -1,6 +1,9 @@
 import axios from "axios";
 
-const BASE_URL = "http://192.168.1.16:4000/api/v1";
+
+const BASE_URL = "https://scarf-amenity-gents.ngrok-free.dev/api/v1";
+// const BASE_URL = "http://192.168.1.148:4000/api/v1"; //oficina
+// const BASE_URL = "http://192.168.1.16:4000/api/v1"; //xata
 // IMPORTANTE: cambia TU_IP por tu IP local (ej: 192.168.1.50)
 // Para ver tu IP ejecuta: ipconfig en Windows
 
@@ -22,8 +25,14 @@ export const authService = {
 
 // ── Productos ─────────────────────────────────────────────────────
 export const productosService = {
-  getAll: (params = {}) => api.get("/products", { params }),
-  getBySlug: (slug) => api.get(`/products/${slug}`),
+  getAll: (params = {}) => {
+    const lang = global.aureaLang;
+    if (lang && lang !== "es") params = { ...params, lang };
+    return api.get("/products", { params });
+  },
+  getBySlug: (slug, lang) => api.get(`/products/${slug}`, { 
+  params: lang && lang !== "es" ? { lang } : {} 
+  }),
 };
 
 // ── Categorías ────────────────────────────────────────────────────

@@ -14,18 +14,22 @@ export default function ProductoScreen({ route, navigation }) {
   const { añadir } = useCarrito();
   const { t } = useIdioma();
   const [producto, setProducto] = useState(productoInicial || null);
-  const [cargando, setCargando] = useState(!productoInicial);
+  const [cargando, setCargando] = useState(true);
   const [variantSeleccionada, setVariantSeleccionada] = useState(null);
   const [añadiendo, setAñadiendo] = useState(false);
 
   useEffect(() => {
-    if (!productoInicial && slug) {
-      productosService.getBySlug(slug)
-        .then((res) => { const data = res.data; setProducto(data.producto || data.product || data); })
-        .catch(() => {})
-        .finally(() => setCargando(false));
-    }
-    if (productoInicial?.variants?.length > 0) setVariantSeleccionada(productoInicial.variants[0]);
+    productosService.getBySlug(slug, global.aureaLang || "es")
+      .then((res) => {
+        const data = res.data;
+        const p = data.producto || data.product || data;
+        setProducto(p);
+        if (p?.variants?.length > 0) setVariantSeleccionada(p.variants[0]);
+      })
+      .catch(() => {
+        if (productoInicial?.variants?.length > 0) setVariantSeleccionada(productoInicial.variants[0]);
+      })
+      .finally(() => setCargando(false));
   }, []);
 
   const añadirAlCarrito = async () => {
@@ -63,6 +67,10 @@ export default function ProductoScreen({ route, navigation }) {
   const imagen = producto.coverImage || producto.imagen;
   const variantes = producto.variants || [];
   const materiales = producto.materials || producto.materiales || [];
+  const catRaw = typeof (producto.category || producto.categoria) === "object"
+    ? (producto.category || producto.categoria)?.name
+    : (producto.category || producto.categoria);
+  const catTraducida = { mujer: t.home.mujer, hombre: t.home.hombre, accesorios: t.home.accesorios }[catRaw?.toLowerCase()] || catRaw;
 
   return (
     <View style={styles.container}>
@@ -105,7 +113,7 @@ export default function ProductoScreen({ route, navigation }) {
                     disabled={v.stock === 0}
                   >
                     <Text style={[styles.variantText, variantSeleccionada?.sku === v.sku && styles.variantTextSelected, v.stock === 0 && styles.variantTextAgotado]}>
-                      {v.size}{v.color ? ` · ${v.color}` : ""}
+                      {v.size}{v.color ? ` · ${t.colores?.[v.color] || v.color}` : ""}
                     </Text>
                     {v.stock === 0 && <Text style={styles.agotadoLabel}>{t.producto.agotado}</Text>}
                   </TouchableOpacity>
@@ -124,7 +132,9 @@ export default function ProductoScreen({ route, navigation }) {
           {materiales.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>{t.producto.materiales}</Text>
-              <Text style={styles.descripcion}>{materiales.join(", ")}</Text>
+              {materiales.map((m, i) => (
+                <Text key={i} style={styles.descripcion}>{t.materiales?.[m] || m}</Text>
+              ))}
             </View>
           )}
 

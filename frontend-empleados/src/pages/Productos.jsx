@@ -3,7 +3,7 @@ import { productosService, categoriasService } from "../services/api";
 
 const CATS_FALLBACK = ["Vestidos","Chaquetas","Pantalones","Tops","Abrigos","Faldas","Accesorios","Zapatos"];
 
-const VACIO = { nombre: "", categoryId: "", precio: "", compareAtPrice: "", stock: "", descripcion: "", imagen: "", certifiable: false, materiales: "" };
+const VACIO = { nombre: "", categoryId: "", precio: "", compareAtPrice: "", stock: "", descripcion: "", imagen: "", certifiable: false, materiales: "", name_en: "", name_uk: "", description_en: "", description_uk: "" };
 
 const stockColor = (stock) => {
   if (stock === 0) return "text-red-600 bg-red-50";
@@ -54,6 +54,25 @@ function Modal({ titulo, form, onChange, onGuardar, onCerrar, guardando, categor
           <div className="col-span-2">
             <label className="text-xs text-stone-500 mb-1 block">Descripción</label>
             <textarea rows={3} className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-400 resize-none" value={form.descripcion} onChange={(e) => onChange("descripcion", e.target.value)} placeholder="Descripción del producto..." />
+          </div>
+          <div className="col-span-2 border-t border-stone-100 pt-3">
+            <p className="text-xs font-semibold text-stone-400 uppercase tracking-wide mb-2">Traducciones (opcional)</p>
+          </div>
+          <div>
+            <label className="text-xs text-stone-500 mb-1 block">Nombre en inglés</label>
+            <input className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-400" value={form.name_en} onChange={(e) => onChange("name_en", e.target.value)} placeholder="Name in English" />
+          </div>
+          <div>
+            <label className="text-xs text-stone-500 mb-1 block">Nombre en ucraniano</label>
+            <input className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-400" value={form.name_uk} onChange={(e) => onChange("name_uk", e.target.value)} placeholder="Назва українською" />
+          </div>
+          <div className="col-span-2">
+            <label className="text-xs text-stone-500 mb-1 block">Descripción en inglés</label>
+            <textarea rows={2} className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-400 resize-none" value={form.description_en} onChange={(e) => onChange("description_en", e.target.value)} placeholder="Description in English..." />
+          </div>
+          <div className="col-span-2">
+            <label className="text-xs text-stone-500 mb-1 block">Descripción en ucraniano</label>
+            <textarea rows={2} className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-400 resize-none" value={form.description_uk} onChange={(e) => onChange("description_uk", e.target.value)} placeholder="Опис українською..." />
           </div>
           <div className="col-span-2">
             <label className="flex items-center gap-2 cursor-pointer">
@@ -156,6 +175,10 @@ export default function Productos() {
       imagen: p.coverImage || p.imagen || p.image || "",
       certifiable: p.certifiable || false,
       materiales: Array.isArray(p.materials || p.materiales) ? (p.materials || p.materiales).join(", ") : (p.materials || p.materiales || ""),
+      name_en: p.name_en || "",
+      name_uk: p.name_uk || "",
+      description_en: p.description_en || "",
+      description_uk: p.description_uk || "",
     });
     setProductoEditar(p);
     setModal("editar");
@@ -176,6 +199,10 @@ export default function Productos() {
         coverImage: form.imagen.trim() || "",
         certifiable: form.certifiable,
         materials: form.materiales ? form.materiales.split(",").map((m) => m.trim()).filter(Boolean) : [],
+        ...(form.name_en.trim() ? { name_en: form.name_en.trim() } : {}),
+        ...(form.name_uk.trim() ? { name_uk: form.name_uk.trim() } : {}),
+        ...(form.description_en.trim() ? { description_en: form.description_en.trim() } : {}),
+        ...(form.description_uk.trim() ? { description_uk: form.description_uk.trim() } : {}),
       };
       if (modal === "crear") {
         const res = await productosService.crear(payload);

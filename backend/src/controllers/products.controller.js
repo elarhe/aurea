@@ -3,12 +3,22 @@ const Product = require("../models/Product");
 const toSlug = (str) =>
   str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
+const applyLang = (producto, lang) => {
+  if (!lang || lang === "es") return producto;
+  const suffix = `_${lang}`;
+  const p = { ...producto };
+  if (p[`name${suffix}`]) p.name = p[`name${suffix}`];
+  if (p[`description${suffix}`]) p.description = p[`description${suffix}`];
+  if (p[`shortDescription${suffix}`]) p.shortDescription = p[`shortDescription${suffix}`];
+  return p;
+};
+
 // GET / — listar con filtros y paginación
 const listar = async (req, res) => {
   try {
     const {
       category, gender, priceMin, priceMax, sort,
-      q, tags, isNew, isFeatured, page = 1, limit = 20,
+      q, tags, isNew, isFeatured, page = 1, limit = 20, lang,
     } = req.query;
 
     const filtro = { isActive: true };
@@ -55,7 +65,7 @@ const listar = async (req, res) => {
       total,
       page: pageNum,
       pages: Math.ceil(total / limitNum),
-      productos,
+      productos: lang ? productos.map((p) => applyLang(p, lang)) : productos,
     });
   } catch (error) {
     console.error("[products.listar]", error);
@@ -66,9 +76,11 @@ const listar = async (req, res) => {
 // GET /:slug — obtener por slug
 const obtener = async (req, res) => {
   try {
+    const { lang } = req.query;
     const producto = await Product.findOne({ slug: req.params.slug, isActive: true })
       .populate("category", "name slug")
-      .populate("relatedProducts", "name slug price coverImage rating");
+      .populate("relatedProducts", "name slug price coverImage rating")
+      .lean();
 
     if (!producto) {
       return res.status(404).json({ ok: false, mensaje: "Producto no encontrado" });
@@ -77,7 +89,7 @@ const obtener = async (req, res) => {
     // Incrementar viewCount sin esperar
     Product.findByIdAndUpdate(producto._id, { $inc: { viewCount: 1 } }).exec();
 
-    return res.json({ ok: true, producto });
+    return res.json({ ok: true, producto: applyLang(producto, lang) });
   } catch (error) {
     console.error("[products.obtener]", error);
     return res.status(500).json({ ok: false, mensaje: "Error interno" });
