@@ -125,6 +125,10 @@ export default function Productos() {
   const [eliminando, setEliminando] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [errorBanner, setErrorBanner] = useState(null);
+  const [pagina, setPagina] = useState(1);
+  const LIMITE = 10;
+
+  useEffect(() => { setPagina(1); }, [busqueda, filtroCat]);
 
   useEffect(() => {
     categoriasService.getAll()
@@ -142,7 +146,7 @@ export default function Productos() {
     setCargando(true);
     setErrorBanner(null);
     try {
-      const params = { page: 1, limit: 100 };
+      const params = { page: pagina, limit: LIMITE };
       if (busqueda.trim()) params.q = busqueda.trim();
       if (filtroCat !== "todas") params.category = filtroCat;
       const res = await productosService.getAll(params);
@@ -154,7 +158,7 @@ export default function Productos() {
     } finally {
       setCargando(false);
     }
-  }, [busqueda, filtroCat]);
+  }, [busqueda, filtroCat, pagina]);
 
   useEffect(() => { const t = setTimeout(cargar, 300); return () => clearTimeout(t); }, [cargar]);
 
@@ -324,6 +328,36 @@ export default function Productos() {
           </tbody>
         </table>
       </div>
+      {(() => {
+        const totalPaginas = Math.ceil(total / LIMITE);
+        if (totalPaginas <= 1) return null;
+        const nums = [...new Set([1, totalPaginas, pagina, pagina - 1, pagina - 2, pagina + 1, pagina + 2])]
+          .filter((n) => n >= 1 && n <= totalPaginas)
+          .sort((a, b) => a - b);
+        const items = [];
+        nums.forEach((n, i) => {
+          if (i > 0 && n - nums[i - 1] > 1) items.push(<span key={`e${i}`} className="text-xs px-1 text-stone-400 self-center">…</span>);
+          items.push(
+            <button key={n} onClick={() => setPagina(n)}
+              className={`text-xs w-8 h-7 rounded-lg border transition-colors ${pagina === n ? "bg-stone-900 text-white border-stone-900" : "border-stone-200 text-stone-600 hover:bg-stone-50"}`}>
+              {n}
+            </button>
+          );
+        });
+        return (
+          <div className="flex items-center justify-center gap-1 py-4 border-t border-stone-100">
+            <button onClick={() => setPagina((p) => Math.max(1, p - 1))} disabled={pagina === 1}
+              className="text-xs px-3 py-1.5 border border-stone-200 rounded-lg text-stone-600 hover:bg-stone-50 disabled:opacity-40 transition-colors">
+              ←
+            </button>
+            {items}
+            <button onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))} disabled={pagina === totalPaginas}
+              className="text-xs px-3 py-1.5 border border-stone-200 rounded-lg text-stone-600 hover:bg-stone-50 disabled:opacity-40 transition-colors">
+              →
+            </button>
+          </div>
+        );
+      })()}
     </div>
   );
 }

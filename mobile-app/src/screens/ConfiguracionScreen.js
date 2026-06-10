@@ -145,9 +145,12 @@ export default function ConfiguracionScreen() {
         </View>
       )}
 
-      <TouchableOpacity style={styles.logoutBtn} onPress={() => Alert.alert(c.cerrarSesion, c.cerrarSesionConfirm, [{ text: c.cancelar, style: "cancel" }, { text: c.cerrarSesion, style: "destructive", onPress: logout }])}>
+      {/* <TouchableOpacity style={styles.logoutBtn} onPress={() => Alert.alert(c.cerrarSesion, c.cerrarSesionConfirm, [{ text: c.cancelar, style: "cancel" }, { text: c.cerrarSesion, style: "destructive", onPress: async () => {
+            await logout();
+            navigation.getParent()?.navigate("MiCuenta");
+          }}])}>
         <Text style={styles.logoutText}>{c.cerrarSesion}</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
       <View style={{ height: 40 }} />
     </ScrollView>
   );

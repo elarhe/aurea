@@ -17,7 +17,10 @@ export default function PerfilScreen({ navigation }) {
   const handleLogin = async () => {
     if (!loginForm.email || !loginForm.password) { Alert.alert("Error", "Introduce email y contraseña"); return; }
     setCargando(true);
-    try { await login(loginForm.email, loginForm.password); }
+    try { 
+      await login(loginForm.email, loginForm.password); 
+      setLoginForm({email:"", password:""});
+    }
     catch (e) { Alert.alert("Error", e.response?.data?.mensaje || t.perfil.credencialesError); }
     finally { setCargando(false); }
   };
@@ -26,7 +29,11 @@ export default function PerfilScreen({ navigation }) {
     if (!regForm.firstName || !regForm.email || !regForm.password) { Alert.alert("Error", "Rellena todos los campos obligatorios"); return; }
     if (regForm.password.length < 8) { Alert.alert("Error", t.perfil.minPassword); return; }
     setCargando(true);
-    try { await registro(regForm.firstName, regForm.lastName, regForm.email, regForm.password, regForm.gender); }
+    try { 
+      await registro(regForm.firstName, regForm.lastName, regForm.email, regForm.password, regForm.gender); 
+      setRegForm({ firstName: "", lastName: "", email: "", password: "", gender: "unspecified" });
+      // setTab("login");  te lleva al login 
+    }
     catch (e) { Alert.alert("Error", e.response?.data?.mensaje || t.perfil.registroError); }
     finally { setCargando(false); }
   };

@@ -54,7 +54,7 @@ const obtener = async (req, res) => {
 // POST / — crear empleado (admin)
 const crear = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, role } = req.body;
+    const { firstName, lastName, email, password, gender } = req.body;
 
     if (!firstName || !lastName || !email || !password) {
       return res.status(400).json({ ok: false, mensaje: "firstName, lastName, email y password son requeridos" });
