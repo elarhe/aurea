@@ -154,8 +154,6 @@ const crearAdmin = async (req, res) => {
       return res.status(409).json({ ok: false, mensaje: "Ya existe un empleado con ese email" });
     }
 
-    const salt = await bcrypt.genSalt(12);
-    const passwordHash = await bcrypt.hash(password, salt);
 
     const empleado = await Employee.create({
       firstName: fName,
