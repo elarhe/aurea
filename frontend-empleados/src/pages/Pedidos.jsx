@@ -1,14 +1,28 @@
 import { useState, useEffect, useCallback } from "react";
 import { pedidosService, certificadosService } from "../services/api";
 
-const estadoOpciones = ["pendiente", "procesando", "enviado", "entregado", "cancelado"];
+const estadoOpciones = [
+  { val: "pending", label: "Pendiente" },
+  { val: "paid", label: "Pagado" },
+  { val: "processing", label: "Procesando" },
+  { val: "shipped", label: "Enviado" },
+  { val: "delivered", label: "Entregado" },
+  { val: "cancelled", label: "Cancelado" },
+];
 
 const estadoBadge = {
-  enviado: "bg-blue-100 text-blue-700",
-  procesando: "bg-amber-100 text-amber-700",
-  entregado: "bg-green-100 text-green-700",
-  pendiente: "bg-stone-100 text-stone-600",
-  cancelado: "bg-red-100 text-red-700",
+  pending: "bg-stone-100 text-stone-600",
+  paid: "bg-green-100 text-green-700",
+  processing: "bg-amber-100 text-amber-700",
+  shipped: "bg-blue-100 text-blue-700",
+  delivered: "bg-emerald-100 text-emerald-700",
+  cancelled: "bg-red-100 text-red-700",
+  refunded: "bg-purple-100 text-purple-700",
+};
+
+const estadoLabel = {
+  pending: "Pendiente", paid: "Pagado", processing: "Procesando",
+  shipped: "Enviado", delivered: "Entregado", cancelled: "Cancelado", refunded: "Reembolsado",
 };
 
 const certBadge = {
@@ -26,14 +40,8 @@ function truncHash(hash) {
 function EtherscanLink({ txHash }) {
   if (!txHash) return null;
   return (
-    <a
-      href={`https://sepolia.etherscan.io/tx/${txHash}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-blue-600 hover:underline font-mono text-xs"
-    >
-      {truncHash(txHash)}
-    </a>
+    <a href={`https://sepolia.etherscan.io/tx/${txHash}`} target="_blank" rel="noopener noreferrer"
+      className="text-blue-600 hover:underline font-mono text-xs">{truncHash(txHash)}</a>
   );
 }
 
@@ -41,11 +49,8 @@ function PanelCertificados({ pedido }) {
   const [emitiendo, setEmitiendo] = useState({});
   const [resultado, setResultado] = useState({});
   const [error, setError] = useState({});
-
   if (!pedido) return null;
-
-  const items = pedido.items || pedido.productos || [];
-
+  const items = pedido.items || [];
   const emitir = async (orderId, itemId) => {
     setEmitiendo((prev) => ({ ...prev, [itemId]: true }));
     setError((prev) => ({ ...prev, [itemId]: null }));
@@ -58,56 +63,35 @@ function PanelCertificados({ pedido }) {
       setEmitiendo((prev) => ({ ...prev, [itemId]: false }));
     }
   };
-
   const conCertificado = items.filter((item) => item.certificate || item.certificado);
-  const sinCertificado = items.filter(
-    (item) => item.certifiable && !item.certificate && !item.certificado && !resultado[item._id || item.id]
-  );
-
+  const sinCertificado = items.filter((item) => item.certifiable && !item.certificate && !item.certificado && !resultado[item._id || item.id]);
   if (conCertificado.length === 0 && sinCertificado.length === 0) return null;
-
   return (
     <div className="border-t border-stone-100 pt-4 space-y-3">
-      <p className="text-stone-400 text-xs font-medium flex items-center gap-1.5">
-        <span>🛡</span> Certificados blockchain
-      </p>
-
+      <p className="text-stone-400 text-xs font-medium flex items-center gap-1.5"><span>🛡</span> Certificados blockchain</p>
       {conCertificado.map((item) => {
         const cert = item.certificate || item.certificado;
         return (
           <div key={item._id || item.id} className="bg-stone-50 rounded-lg p-3 space-y-1.5">
-            <p className="text-xs font-medium text-stone-700">{item.nombre || item.name || item.productId}</p>
+            <p className="text-xs font-medium text-stone-700">{item.productName || item.name || "—"}</p>
             <div className="flex items-center justify-between">
               <EtherscanLink txHash={cert.txHash} />
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${certBadge[cert.status] || "bg-stone-100 text-stone-500"}`}>
-                {cert.status}
-              </span>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${certBadge[cert.status] || "bg-stone-100 text-stone-500"}`}>{cert.status}</span>
             </div>
           </div>
         );
       })}
-
       {sinCertificado.map((item) => {
         const itemId = item._id || item.id;
         const res = resultado[itemId];
         return (
           <div key={itemId} className="bg-amber-50 border border-amber-100 rounded-lg p-3 space-y-2">
-            <p className="text-xs font-medium text-stone-700">{item.nombre || item.name || item.productId}</p>
-            {res ? (
-              <div className="space-y-1">
-                <span className="text-xs text-green-600 font-medium">Certificado emitido</span>
-                <EtherscanLink txHash={res.txHash} />
-              </div>
-            ) : (
+            <p className="text-xs font-medium text-stone-700">{item.productName || item.name || "—"}</p>
+            {res ? <div><span className="text-xs text-green-600 font-medium">Certificado emitido</span><EtherscanLink txHash={res.txHash} /></div> : (
               <>
-                {error[itemId] && (
-                  <p className="text-xs text-red-500">{error[itemId]}</p>
-                )}
-                <button
-                  onClick={() => emitir(pedido._id || pedido.id, itemId)}
-                  disabled={emitiendo[itemId]}
-                  className="w-full text-xs bg-stone-900 text-white px-3 py-1.5 rounded-md hover:bg-stone-700 transition-colors disabled:opacity-50"
-                >
+                {error[itemId] && <p className="text-xs text-red-500">{error[itemId]}</p>}
+                <button onClick={() => emitir(pedido._id || pedido.id, itemId)} disabled={emitiendo[itemId]}
+                  className="w-full text-xs bg-stone-900 text-white px-3 py-1.5 rounded-md hover:bg-stone-700 transition-colors disabled:opacity-50">
                   {emitiendo[itemId] ? "Emitiendo..." : "Emitir certificado"}
                 </button>
               </>
@@ -117,6 +101,18 @@ function PanelCertificados({ pedido }) {
       })}
     </div>
   );
+}
+
+function getNombreCliente(p) {
+  if (p.user?.firstName) return `${p.user.firstName} ${p.user.lastName || ""}`.trim();
+  if (p.user?.email) return p.user.email;
+  if (p.cliente?.nombre) return p.cliente.nombre;
+  if (typeof p.cliente === "string") return p.cliente;
+  return "—";
+}
+
+function getEmailCliente(p) {
+  return p.user?.email || p.cliente?.email || p.email || "—";
 }
 
 export default function Pedidos() {
@@ -149,21 +145,16 @@ export default function Pedidos() {
 
   useEffect(() => { cargar(); }, [cargar]);
 
-  const cambiarEstado = async (id, nuevoEstado, note = "") => {
+  const cambiarEstado = async (id, nuevoEstado) => {
     setCambiandoEstado(true);
     try {
-      await pedidosService.cambiarEstado(id, nuevoEstado, note);
-      setPedidos((prev) =>
-        prev.map((p) => {
-          const pid = p._id || p.id;
-          return pid === id ? { ...p, status: nuevoEstado, estado: nuevoEstado } : p;
-        })
-      );
+      await pedidosService.cambiarEstado(id, nuevoEstado);
+      setPedidos((prev) => prev.map((p) => (p._id || p.id) === id ? { ...p, status: nuevoEstado } : p));
       if (seleccionado && (seleccionado._id || seleccionado.id) === id) {
-        setSeleccionado((prev) => ({ ...prev, status: nuevoEstado, estado: nuevoEstado }));
+        setSeleccionado((prev) => ({ ...prev, status: nuevoEstado }));
       }
     } catch (e) {
-      alert(e.response?.data?.message || "Error al cambiar estado");
+      alert(e.response?.data?.mensaje || "Error al cambiar estado");
     } finally {
       setCambiandoEstado(false);
     }
@@ -187,22 +178,20 @@ export default function Pedidos() {
         </div>
       )}
 
-      {/* Filtros */}
       <div className="flex gap-2 flex-wrap">
-        {["todos", ...estadoOpciones].map((f) => (
-          <button
-            key={f}
-            onClick={() => { setFiltro(f); setPagina(1); }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-all
-              ${filtro === f ? "bg-stone-900 text-white" : "bg-white border border-stone-200 text-stone-600 hover:border-stone-400"}`}
-          >
-            {f}
+        <button onClick={() => { setFiltro("todos"); setPagina(1); }}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${filtro === "todos" ? "bg-stone-900 text-white" : "bg-white border border-stone-200 text-stone-600 hover:border-stone-400"}`}>
+          Todos
+        </button>
+        {estadoOpciones.map((f) => (
+          <button key={f.val} onClick={() => { setFiltro(f.val); setPagina(1); }}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${filtro === f.val ? "bg-stone-900 text-white" : "bg-white border border-stone-200 text-stone-600 hover:border-stone-400"}`}>
+            {f.label}
           </button>
         ))}
       </div>
 
       <div className="flex gap-6">
-        {/* Tabla */}
         <div className="flex-1 space-y-3">
           <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
             <table className="w-full text-sm">
@@ -215,14 +204,9 @@ export default function Pedidos() {
               </thead>
               <tbody>
                 {cargando ? (
-                  [1, 2, 3, 4, 5].map((i) => (
+                  [1,2,3,4,5].map((i) => (
                     <tr key={i} className="border-b border-stone-100 animate-pulse">
-                      <td className="px-4 py-3"><div className="h-3 bg-stone-100 rounded w-20"></div></td>
-                      <td className="px-4 py-3"><div className="h-3 bg-stone-100 rounded w-28"></div></td>
-                      <td className="px-4 py-3"><div className="h-3 bg-stone-100 rounded w-20"></div></td>
-                      <td className="px-4 py-3"><div className="h-3 bg-stone-100 rounded w-16"></div></td>
-                      <td className="px-4 py-3"><div className="h-4 bg-stone-100 rounded-full w-20"></div></td>
-                      <td></td>
+                      {[1,2,3,4,5,6].map((j) => <td key={j} className="px-4 py-3"><div className="h-3 bg-stone-100 rounded w-20"/></td>)}
                     </tr>
                   ))
                 ) : pedidos.length === 0 ? (
@@ -232,25 +216,18 @@ export default function Pedidos() {
                   const estado = p.status || p.estado;
                   const selId = seleccionado?._id || seleccionado?.id;
                   return (
-                    <tr
-                      key={pid}
-                      onClick={() => setSeleccionado(p)}
-                      className={`border-b border-stone-100 cursor-pointer transition-colors hover:bg-stone-50 ${selId === pid ? "bg-amber-50" : ""}`}
-                    >
-                      <td className="px-4 py-3 font-mono text-xs text-stone-500">{p.orderNumber || pid?.slice(-8) || "—"}</td>
+                    <tr key={pid} onClick={() => setSeleccionado(p)}
+                      className={`border-b border-stone-100 cursor-pointer transition-colors hover:bg-stone-50 ${selId === pid ? "bg-amber-50" : ""}`}>
+                      <td className="px-4 py-3 font-mono text-xs text-stone-500">{p.orderNumber || pid?.slice(-8)}</td>
                       <td className="px-4 py-3">
-                        <p className="font-medium text-stone-800">{p.cliente?.nombre || p.cliente || "—"}</p>
-                        <p className="text-xs text-stone-400">{p.cliente?.email || p.email || ""}</p>
+                        <p className="font-medium text-stone-800 text-sm">{getNombreCliente(p)}</p>
+                        <p className="text-xs text-stone-400">{getEmailCliente(p)}</p>
                       </td>
-                      <td className="px-4 py-3 text-stone-500">
-                        {p.createdAt ? new Date(p.createdAt).toLocaleDateString("es-ES") : p.fecha || "—"}
-                      </td>
-                      <td className="px-4 py-3 font-semibold text-stone-700">
-                        {(p.total || 0).toLocaleString("es-ES", { style: "currency", currency: "EUR" })}
-                      </td>
+                      <td className="px-4 py-3 text-stone-500 text-sm">{p.createdAt ? new Date(p.createdAt).toLocaleDateString("es-ES") : "—"}</td>
+                      <td className="px-4 py-3 font-semibold text-stone-700">{(p.total || 0).toLocaleString("es-ES", { style: "currency", currency: "EUR" })}</td>
                       <td className="px-4 py-3">
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${estadoBadge[estado] || "bg-stone-100 text-stone-600"}`}>
-                          {estado}
+                          {estadoLabel[estado] || estado}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-stone-400 text-xs">›</td>
@@ -261,71 +238,40 @@ export default function Pedidos() {
             </table>
           </div>
 
-          {/* Paginación */}
           {totalPaginas > 1 && (
             <div className="flex items-center justify-between px-1">
               <p className="text-xs text-stone-400">Página {pagina} de {totalPaginas}</p>
               <div className="flex gap-2">
-                <button
-                  onClick={() => setPagina((p) => Math.max(1, p - 1))}
-                  disabled={pagina === 1}
-                  className="text-xs px-3 py-1.5 border border-stone-200 rounded-lg text-stone-600 hover:bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  ← Anterior
-                </button>
-                <button
-                  onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
-                  disabled={pagina === totalPaginas}
-                  className="text-xs px-3 py-1.5 border border-stone-200 rounded-lg text-stone-600 hover:bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  Siguiente →
-                </button>
+                <button onClick={() => setPagina((p) => Math.max(1, p - 1))} disabled={pagina === 1}
+                  className="text-xs px-3 py-1.5 border border-stone-200 rounded-lg text-stone-600 hover:bg-stone-50 disabled:opacity-40 transition-colors">← Anterior</button>
+                <button onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))} disabled={pagina === totalPaginas}
+                  className="text-xs px-3 py-1.5 border border-stone-200 rounded-lg text-stone-600 hover:bg-stone-50 disabled:opacity-40 transition-colors">Siguiente →</button>
               </div>
             </div>
           )}
         </div>
 
-        {/* Detalle */}
         {seleccionado && (() => {
           const estado = seleccionado.status || seleccionado.estado;
           return (
             <div className="w-80 bg-white rounded-xl border border-stone-200 p-5 space-y-4 self-start max-h-screen overflow-y-auto sticky top-6">
               <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-stone-800">
-                  {seleccionado.orderNumber || (seleccionado._id || seleccionado.id)?.slice(-8)}
-                </h3>
+                <h3 className="font-semibold text-stone-800">{seleccionado.orderNumber || (seleccionado._id)?.slice(-8)}</h3>
                 <button onClick={() => setSeleccionado(null)} className="text-stone-400 hover:text-stone-700 text-sm">✕</button>
               </div>
               <div className="space-y-2 text-sm">
-                <div>
-                  <p className="text-stone-400 text-xs">Cliente</p>
-                  <p className="font-medium text-stone-700">{seleccionado.cliente?.nombre || seleccionado.cliente || "—"}</p>
-                </div>
-                <div>
-                  <p className="text-stone-400 text-xs">Email</p>
-                  <p className="text-stone-600">{seleccionado.cliente?.email || seleccionado.email || "—"}</p>
-                </div>
-                <div>
-                  <p className="text-stone-400 text-xs">Fecha</p>
-                  <p className="text-stone-600">
-                    {seleccionado.createdAt
-                      ? new Date(seleccionado.createdAt).toLocaleDateString("es-ES")
-                      : seleccionado.fecha || "—"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-stone-400 text-xs">Total</p>
-                  <p className="font-bold text-stone-800">
-                    {(seleccionado.total || 0).toLocaleString("es-ES", { style: "currency", currency: "EUR" })}
-                  </p>
-                </div>
-                {(seleccionado.items || seleccionado.productos)?.length > 0 && (
+                <div><p className="text-stone-400 text-xs">Cliente</p><p className="font-medium text-stone-700">{getNombreCliente(seleccionado)}</p></div>
+                <div><p className="text-stone-400 text-xs">Email</p><p className="text-stone-600">{getEmailCliente(seleccionado)}</p></div>
+                <div><p className="text-stone-400 text-xs">Fecha</p><p className="text-stone-600">{seleccionado.createdAt ? new Date(seleccionado.createdAt).toLocaleDateString("es-ES") : "—"}</p></div>
+                <div><p className="text-stone-400 text-xs">Total</p><p className="font-bold text-stone-800">{(seleccionado.total || 0).toLocaleString("es-ES", { style: "currency", currency: "EUR" })}</p></div>
+                {seleccionado.items?.length > 0 && (
                   <div>
-                    <p className="text-stone-400 text-xs mb-1">Productos</p>
-                    {(seleccionado.items || seleccionado.productos).map((pr, i) => (
-                      <p key={i} className="text-stone-600 text-xs">
-                        · {typeof pr === "string" ? pr : (pr.nombre || pr.name || pr.productId)}
-                      </p>
+                    <p className="text-stone-400 text-xs mb-1">Productos ({seleccionado.items.length})</p>
+                    {seleccionado.items.map((pr, i) => (
+                      <div key={i} className="flex justify-between text-xs text-stone-600 py-0.5">
+                        <span>· {pr.productName || pr.name || "Producto"}</span>
+                        <span className="text-stone-400">x{pr.quantity || 1}</span>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -334,21 +280,14 @@ export default function Pedidos() {
                 <p className="text-stone-400 text-xs mb-2">Cambiar estado</p>
                 <div className="flex flex-wrap gap-1.5">
                   {estadoOpciones.map((e) => (
-                    <button
-                      key={e}
-                      onClick={() => cambiarEstado(seleccionado._id || seleccionado.id, e)}
-                      disabled={cambiandoEstado || estado === e}
-                      className={`text-xs px-2 py-1 rounded-md capitalize transition-all disabled:opacity-60
-                        ${estado === e
-                          ? "bg-stone-900 text-white"
-                          : "bg-stone-100 text-stone-600 hover:bg-stone-200"}`}
-                    >
-                      {e}
+                    <button key={e.val} onClick={() => cambiarEstado(seleccionado._id || seleccionado.id, e.val)}
+                      disabled={cambiandoEstado || estado === e.val}
+                      className={`text-xs px-2 py-1 rounded-md transition-all disabled:opacity-60 ${estado === e.val ? "bg-stone-900 text-white" : "bg-stone-100 text-stone-600 hover:bg-stone-200"}`}>
+                      {e.label}
                     </button>
                   ))}
                 </div>
               </div>
-
               <PanelCertificados pedido={seleccionado} />
             </div>
           );

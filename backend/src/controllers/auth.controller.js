@@ -103,7 +103,7 @@ const loginCliente = async (req, res) => {
 // ─── REGISTRO CLIENTES ───────────────────────────────────────────────
 const registroCliente = async (req, res) => {
   try {
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password, gender } = req.body;
 
     if (!firstName || !email || !password) {
       return res.status(400).json({ ok: false, mensaje: "Nombre, email y contraseña son obligatorios" });
@@ -119,9 +119,10 @@ const registroCliente = async (req, res) => {
         lastName: lastName || "",
         email: email.toLowerCase(),
         password: password,
+        gender: gender || "unspecified",
         isActive: true,
         emailVerified: false,
-        });
+    });
 
     const token = generarToken(usuario._id, "user");
 

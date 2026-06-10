@@ -14,6 +14,9 @@ export default function CatalogoScreen({ navigation }) {
   const [cargando, setCargando] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [total, setTotal] = useState(0);
+  const [pagina, setPagina] = useState(1);
+
+  useEffect(() => { setPagina(1); }, [busqueda, tabActivo]);
 
   const TABS = [
     { label: t.catalogo.todo, value: "" },
@@ -24,12 +27,13 @@ export default function CatalogoScreen({ navigation }) {
 
   const cargar = useCallback(async () => {
     try {
-      const params = { page: 1, limit: 20 };
+      const params = { page: pagina, limit: 10 };
       if (busqueda.trim()) params.q = busqueda.trim();
       if (tabActivo) params.category = tabActivo;
       const res = await productosService.getAll(params);
       const data = res.data;
-      setProductos(data.productos || data.products || data.data || []);
+      const nuevos = data.productos || data.products || data.data || [];
+      setProductos(nuevos);
       setTotal(data.total || data.count || 0);
     } catch (e) {
       console.log("Error:", e.message);
@@ -37,14 +41,15 @@ export default function CatalogoScreen({ navigation }) {
       setCargando(false);
       setRefreshing(false);
     }
-  }, [busqueda, tabActivo]);
+  }, [busqueda, tabActivo, pagina]);
 
   useEffect(() => {
     const timer = setTimeout(cargar, 300);
     return () => clearTimeout(timer);
   }, [cargar]);
 
-  const onRefresh = () => { setRefreshing(true); cargar(); };
+  const onRefresh = () => { setRefreshing(true); setPagina(1); };
+  const totalPaginas = Math.ceil(total / 10);
 
   const renderProducto = ({ item: p }) => {
     const nombre = p.name || p.nombre;
@@ -127,27 +132,80 @@ export default function CatalogoScreen({ navigation }) {
         ))}
       </View>
 
-      <Text style={styles.resultados}>{total} {t.catalogo.piezas}</Text>
+      <Text style={styles.resultados}>
+        {/* {Math.min(pagina * 10, total) - (pagina - 1) * 10} {t.catalogo.piezas} · {total} {t.catalogo.piezas} en total */}
+        {Math.min(pagina * 10, total) - (pagina - 1) * 10} {t.catalogo.piezas} 
+      </Text>
 
       {cargando ? (
-        <ActivityIndicator color="#1c1c1c" style={{ marginTop: 40 }} />
-      ) : (
-        <FlatList
-          data={productos}
-          renderItem={renderProducto}
-          keyExtractor={(p) => p._id || p.id}
-          numColumns={2}
-          columnWrapperStyle={styles.row}
-          contentContainerStyle={styles.lista}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-          ListEmptyComponent={
-            <View style={styles.vacio}>
-              <Text style={styles.vacioEmoji}>🔍</Text>
-              <Text style={styles.vacioText}>{t.catalogo.sinResultados}</Text>
+      <ActivityIndicator color="#1c1c1c" style={{ marginTop: 40 }} />
+    ) : (
+      <FlatList
+        data={productos}
+        renderItem={renderProducto}
+        keyExtractor={(p) => p._id || p.id}
+        numColumns={2}
+        columnWrapperStyle={styles.row}
+        contentContainerStyle={styles.lista}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        ListEmptyComponent={
+          <View style={styles.vacio}>
+            <Text style={styles.vacioEmoji}>🔍</Text>
+            <Text style={styles.vacioText}>{t.catalogo.sinResultados}</Text>
+          </View>
+        }
+        ListFooterComponent={totalPaginas > 1 ? (() => {
+          const nums = [...new Set([1, totalPaginas, pagina, pagina - 1, pagina - 2, pagina + 1, pagina + 2])]
+            .filter((n) => n >= 1 && n <= totalPaginas)
+            .sort((a, b) => a - b);
+          const items = [];
+          nums.forEach((n, i) => {
+            if (i > 0 && n - nums[i - 1] > 1) items.push(<Text key={`e${i}`} style={styles.paginaDots}>…</Text>);
+            items.push(
+              <TouchableOpacity key={n} onPress={() => setPagina(n)} style={[styles.paginaBtn, pagina === n && styles.paginaBtnActivo]}>
+                <Text style={[styles.paginaNum, pagina === n && styles.paginaNumActivo]}>{n}</Text>
+              </TouchableOpacity>
+            );
+          });
+          return (
+            <View style={styles.paginacion}>
+              <TouchableOpacity onPress={() => setPagina((p) => Math.max(1, p - 1))} disabled={pagina === 1} style={[styles.paginaArrow, pagina === 1 && styles.paginaDisabled]}>
+                <Text style={styles.paginaArrowText}>←</Text>
+              </TouchableOpacity>
+              {items}
+              <TouchableOpacity onPress={() => setPagina((p) => Math.min(totalPaginas, p + 1))} disabled={pagina === totalPaginas} style={[styles.paginaArrow, pagina === totalPaginas && styles.paginaDisabled]}>
+                <Text style={styles.paginaArrowText}>→</Text>
+              </TouchableOpacity>
             </View>
-          }
-        />
-      )}
+          );
+        })() : null}
+      />
+    )}
+      {totalPaginas > 1 && (() => {
+        const nums = [...new Set([1, totalPaginas, pagina, pagina - 1, pagina - 2, pagina + 1, pagina + 2])]
+          .filter((n) => n >= 1 && n <= totalPaginas)
+          .sort((a, b) => a - b);
+        const items = [];
+        nums.forEach((n, i) => {
+          if (i > 0 && n - nums[i - 1] > 1) items.push(<Text key={`e${i}`} style={styles.paginaDots}>…</Text>);
+          items.push(
+            <TouchableOpacity key={n} onPress={() => setPagina(n)} style={[styles.paginaBtn, pagina === n && styles.paginaBtnActivo]}>
+              <Text style={[styles.paginaNum, pagina === n && styles.paginaNumActivo]}>{n}</Text>
+            </TouchableOpacity>
+          );
+        });
+        return (
+          <View style={styles.paginacion}>
+            <TouchableOpacity onPress={() => setPagina((p) => Math.max(1, p - 1))} disabled={pagina === 1} style={[styles.paginaArrow, pagina === 1 && styles.paginaDisabled]}>
+              <Text style={styles.paginaArrowText}>←</Text>
+            </TouchableOpacity>
+            {items}
+            <TouchableOpacity onPress={() => setPagina((p) => Math.min(totalPaginas, p + 1))} disabled={pagina === totalPaginas} style={[styles.paginaArrow, pagina === totalPaginas && styles.paginaDisabled]}>
+              <Text style={styles.paginaArrowText}>→</Text>
+            </TouchableOpacity>
+          </View>
+        );
+      })()}
     </View>
   );
 }
@@ -198,4 +256,13 @@ const styles = StyleSheet.create({
   vacio: { alignItems: "center", marginTop: 60 },
   vacioEmoji: { fontSize: 40, marginBottom: 12 },
   vacioText: { color: "#999", fontSize: 14 },
+  paginacion: { flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 6, padding: 16, paddingBottom: 24 },
+  paginaArrow: { paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: "#e5e0d8", borderRadius: 8 },
+  paginaArrowText: { fontSize: 14, color: "#1c1c1c" },
+  paginaDisabled: { opacity: 0.35 },
+  paginaBtn: { width: 34, height: 34, borderRadius: 6, borderWidth: 1, borderColor: "#e5e0d8", justifyContent: "center", alignItems: "center" },
+  paginaBtnActivo: { backgroundColor: "#1c1c1c", borderColor: "#1c1c1c" },
+  paginaNum: { fontSize: 13, color: "#1c1c1c", fontWeight: "500" },
+  paginaNumActivo: { color: "#fff", fontWeight: "700" },
+  paginaDots: { fontSize: 13, color: "#aaa", paddingHorizontal: 2 },
 });

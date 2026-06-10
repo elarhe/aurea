@@ -3,14 +3,8 @@ import { empleadosService } from "../services/api";
 
 const rolBadge = {
   admin: "bg-amber-100 text-amber-700",
+  superadmin: "bg-amber-100 text-amber-700",
   empleado: "bg-stone-100 text-stone-600",
-};
-
-const estadoBadge = {
-  activo: "bg-green-100 text-green-700",
-  inactivo: "bg-red-100 text-red-600",
-  true: "bg-green-100 text-green-700",
-  false: "bg-red-100 text-red-600",
 };
 
 const FORM_VACIO = { nombre: "", email: "", password: "", role: "empleado" };
@@ -23,57 +17,30 @@ function ModalCrear({ form, onChange, onGuardar, onCerrar, guardando, error }) {
           <h3 className="text-lg font-bold text-stone-800">Añadir empleado</h3>
           <button onClick={onCerrar} className="text-stone-400 hover:text-stone-700 text-xl leading-none">✕</button>
         </div>
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-            <p className="text-red-600 text-sm">{error}</p>
-          </div>
-        )}
+        {error && <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2"><p className="text-red-600 text-sm">{error}</p></div>}
         <div className="space-y-3">
           <div>
             <label className="text-xs text-stone-500 mb-1 block">Nombre completo *</label>
-            <input
-              className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-400"
-              value={form.nombre}
-              onChange={(e) => onChange("nombre", e.target.value)}
-              placeholder="Nombre del empleado"
-            />
+            <input className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-400" value={form.nombre} onChange={(e) => onChange("nombre", e.target.value)} placeholder="Nombre del empleado" />
           </div>
           <div>
             <label className="text-xs text-stone-500 mb-1 block">Email *</label>
-            <input
-              type="email"
-              className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-400"
-              value={form.email}
-              onChange={(e) => onChange("email", e.target.value)}
-              placeholder="correo@aurea.com"
-            />
+            <input type="email" className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-400" value={form.email} onChange={(e) => onChange("email", e.target.value)} placeholder="correo@aurea.com" />
           </div>
           <div>
             <label className="text-xs text-stone-500 mb-1 block">Contraseña *</label>
-            <input
-              type="password"
-              className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-400"
-              value={form.password}
-              onChange={(e) => onChange("password", e.target.value)}
-              placeholder="Mínimo 6 caracteres"
-            />
+            <input type="password" className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-400" value={form.password} onChange={(e) => onChange("password", e.target.value)} placeholder="Mínimo 6 caracteres" />
           </div>
           <div>
             <label className="text-xs text-stone-500 mb-1 block">Rol</label>
-            <select
-              className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-400 bg-white"
-              value={form.role}
-              onChange={(e) => onChange("role", e.target.value)}
-            >
+            <select className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-400 bg-white" value={form.role} onChange={(e) => onChange("role", e.target.value)}>
               <option value="empleado">Empleado</option>
               <option value="admin">Admin</option>
             </select>
           </div>
         </div>
         <div className="flex justify-end gap-2 pt-2">
-          <button onClick={onCerrar} className="px-4 py-2 text-sm text-stone-600 border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors">
-            Cancelar
-          </button>
+          <button onClick={onCerrar} className="px-4 py-2 text-sm text-stone-600 border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors">Cancelar</button>
           <button onClick={onGuardar} disabled={guardando} className="px-4 py-2 text-sm bg-stone-900 text-white rounded-lg hover:bg-stone-700 transition-colors disabled:opacity-50">
             {guardando ? "Creando..." : "Crear empleado"}
           </button>
@@ -91,15 +58,13 @@ export default function Empleados() {
   const [form, setForm] = useState(FORM_VACIO);
   const [guardando, setGuardando] = useState(false);
   const [errorModal, setErrorModal] = useState(null);
-  const [toggling, setToggling] = useState({});
 
   const cargar = useCallback(async () => {
     setCargando(true);
     setError(null);
     try {
       const res = await empleadosService.getAll();
-      const resData = res.data;
-      setEmpleados(resData.empleados || resData.employees || resData.data || []);
+      setEmpleados(res.data.empleados || res.data.employees || res.data.data || []);
     } catch (e) {
       setError(e.response?.data?.message || "Error al cargar empleados");
     } finally {
@@ -116,14 +81,8 @@ export default function Empleados() {
     setGuardando(true);
     setErrorModal(null);
     try {
-      const res = await empleadosService.crear({
-        nombre: form.nombre.trim(),
-        email: form.email.trim(),
-        password: form.password,
-        role: form.role,
-      });
-      const nuevoEmpleado = res.data?.empleado || res.data;
-      setEmpleados((prev) => [...prev, nuevoEmpleado]);
+      const res = await empleadosService.crear({ nombre: form.nombre.trim(), email: form.email.trim(), password: form.password, role: form.role });
+      setEmpleados((prev) => [...prev, res.data?.empleado || res.data]);
       setModalCrear(false);
       setForm(FORM_VACIO);
     } catch (e) {
@@ -133,49 +92,16 @@ export default function Empleados() {
     }
   };
 
-  const toggleEstado = async (id) => {
-    setToggling((prev) => ({ ...prev, [id]: true }));
-    try {
-      const res = await empleadosService.toggleEstado(id);
-      const updated = res.data?.empleado || res.data;
-      setEmpleados((prev) =>
-        prev.map((e) => {
-          const eid = e._id || e.id;
-          if (eid !== id) return e;
-          if (updated && (updated._id || updated.id)) return updated;
-          const currentActive = e.activo ?? (e.estado === "activo");
-          return { ...e, activo: !currentActive, estado: currentActive ? "inactivo" : "activo" };
-        })
-      );
-    } catch (e) {
-      alert(e.response?.data?.message || "Error al cambiar estado");
-    } finally {
-      setToggling((prev) => ({ ...prev, [id]: false }));
-    }
-  };
-
-  const initials = (nombre) =>
-    (nombre || "?").split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
-
-  const avatarColor = (rol) =>
-    (rol === "admin" || rol === "superadmin") ? "bg-amber-500 text-stone-900" : "bg-stone-200 text-stone-700";
-
-  const esActivo = (e) => {
-    if (typeof e.activo === "boolean") return e.activo;
-    return e.estado === "activo";
-  };
+  const getNombre = (e) => `${e.firstName || ""} ${e.lastName || ""}`.trim() || e.email;
+  const getInitials = (e) => getNombre(e).split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase() || "?";
+  const avatarColor = (rol) => (rol === "admin" || rol === "superadmin") ? "bg-amber-500 text-stone-900" : "bg-stone-200 text-stone-700";
 
   return (
     <div className="p-8 space-y-6">
       {modalCrear && (
-        <ModalCrear
-          form={form}
-          onChange={onChange}
-          onGuardar={crearEmpleado}
+        <ModalCrear form={form} onChange={onChange} onGuardar={crearEmpleado}
           onCerrar={() => { setModalCrear(false); setForm(FORM_VACIO); setErrorModal(null); }}
-          guardando={guardando}
-          error={errorModal}
-        />
+          guardando={guardando} error={errorModal} />
       )}
 
       <div className="flex items-center justify-between">
@@ -183,10 +109,7 @@ export default function Empleados() {
           <h2 className="text-2xl font-bold text-stone-800">Empleados</h2>
           <p className="text-stone-500 text-sm mt-1">{empleados.length} integrantes del equipo</p>
         </div>
-        <button
-          onClick={() => setModalCrear(true)}
-          className="bg-stone-900 text-white text-sm px-4 py-2 rounded-lg hover:bg-stone-700 transition-colors"
-        >
+        <button onClick={() => setModalCrear(true)} className="bg-stone-900 text-white text-sm px-4 py-2 rounded-lg hover:bg-stone-700 transition-colors">
           + Añadir empleado
         </button>
       </div>
@@ -200,16 +123,15 @@ export default function Empleados() {
 
       {cargando ? (
         <div className="grid grid-cols-2 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white rounded-xl border border-stone-200 p-5 animate-pulse space-y-3">
+          {[1,2,3,4].map((i) => (
+            <div key={i} className="bg-white rounded-xl border border-stone-200 p-5 animate-pulse">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full bg-stone-100"></div>
+                <div className="w-12 h-12 rounded-full bg-stone-100" />
                 <div className="space-y-2 flex-1">
-                  <div className="h-3 bg-stone-100 rounded w-32"></div>
-                  <div className="h-2.5 bg-stone-100 rounded w-24"></div>
+                  <div className="h-3 bg-stone-100 rounded w-32" />
+                  <div className="h-2.5 bg-stone-100 rounded w-24" />
                 </div>
               </div>
-              <div className="h-8 bg-stone-100 rounded"></div>
             </div>
           ))}
         </div>
@@ -217,48 +139,27 @@ export default function Empleados() {
         <div className="grid grid-cols-2 gap-4">
           {empleados.map((e) => {
             const id = e._id || e.id;
-            const activo = esActivo(e);
             const rol = e.role || e.rol || "empleado";
-            const estadoLabel = activo ? "activo" : "inactivo";
-            const fechaAlta = e.createdAt
-              ? new Date(e.createdAt).toLocaleDateString("es-ES")
-              : e.fechaAlta || "—";
+            const nombre = getNombre(e);
+            const fechaAlta = e.createdAt ? new Date(e.createdAt).toLocaleDateString("es-ES") : "—";
 
             return (
               <div key={id} className="bg-white rounded-xl border border-stone-200 p-5">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold ${avatarColor(rol)}`}>
-                      {initials(e.nombre || e.name || e.email)}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-stone-800">{e.nombre || e.name || "—"}</p>
-                      <p className="text-stone-400 text-xs">{e.email}</p>
-                    </div>
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${avatarColor(rol)}`}>
+                    {getInitials(e)}
                   </div>
-                  <div className="flex flex-col items-end gap-1.5">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${rolBadge[rol] || "bg-stone-100 text-stone-600"}`}>
-                      {rol}
-                    </span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${estadoBadge[estadoLabel]}`}>
-                      {estadoLabel}
-                    </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <p className="font-semibold text-stone-800 truncate">{nombre}</p>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${rolBadge[rol] || "bg-stone-100 text-stone-600"}`}>
+                        {rol}
+                      </span>
+                    </div>
+                    <p className="text-stone-400 text-xs truncate">{e.email}</p>
+                    {e.jobTitle && <p className="text-stone-300 text-xs mt-0.5">{e.jobTitle}</p>}
+                    <p className="text-stone-300 text-xs mt-1">Alta: {fechaAlta}</p>
                   </div>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between border-t border-stone-100 pt-3">
-                  <p className="text-xs text-stone-400">Alta: {fechaAlta}</p>
-                  <button
-                    onClick={() => toggleEstado(id)}
-                    disabled={toggling[id]}
-                    className={`text-xs px-3 py-1 rounded-md font-medium transition-all disabled:opacity-50
-                      ${activo
-                        ? "bg-red-50 text-red-600 hover:bg-red-100"
-                        : "bg-green-50 text-green-700 hover:bg-green-100"
-                      }`}
-                  >
-                    {toggling[id] ? "..." : activo ? "Desactivar" : "Activar"}
-                  </button>
                 </div>
               </div>
             );
