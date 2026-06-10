@@ -35,7 +35,13 @@ const listar = async (req, res) => {
       if (priceMin) filtro.price.$gte = Number(priceMin);
       if (priceMax) filtro.price.$lte = Number(priceMax);
     }
-    if (q) filtro.$text = { $search: q };
+    if (q) {
+      filtro.$or = [
+        { name: { $regex: q, $options: "i" } },
+        { name_en: { $regex: q, $options: "i" } },
+        { name_uk: { $regex: q, $options: "i" } },
+      ];
+    }
     if (tags) filtro.tags = { $in: Array.isArray(tags) ? tags : [tags] };
     if (isNew === "true") filtro.isNew = true;
     if (isFeatured === "true") filtro.isFeatured = true;
