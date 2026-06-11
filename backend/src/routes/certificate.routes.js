@@ -8,6 +8,7 @@ const {
   listarTodos,
   qrCertificado,
   migrarCertificadosPedidos,
+  reEmitirPendientes,
 } = require("../controllers/certificate.controller");
 const { proteger, soloAdmin } = require("../middleware/auth.middleware");
 
@@ -25,5 +26,6 @@ router.get("/:id", proteger, obtenerCertificado);
 router.get("/", proteger, soloAdmin, listarTodos);
 router.post("/emitir", proteger, soloAdmin, emitirCertificado);
 router.post("/migrar", proteger, soloAdmin, migrarCertificadosPedidos);
+router.post("/re-emitir", proteger, soloAdmin, reEmitirPendientes);
 
 module.exports = router;

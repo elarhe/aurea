@@ -395,6 +395,63 @@ const migrarCertificadosPedidos = async (req, res) => {
   }
 };
 
+
+// ─── Re-emitir certificados pendientes a blockchain ──────────────────────────
+/**
+ * POST /api/v1/certificates/re-emitir
+ * Intenta emitir a Sepolia todos los certificados en estado "pending" o "failed".
+ * Solo admin.
+ */
+const reEmitirPendientes = async (req, res) => {
+  try {
+    const blockchainEnabled = process.env.BLOCKCHAIN_ENABLED === "true";
+    if (!blockchainEnabled) {
+      return res.status(400).json({ ok: false, mensaje: "BLOCKCHAIN_ENABLED no está activo" });
+    }
+
+    const pendientes = await Certificate.find({ status: { $in: ["pending", "failed"] } })
+      .populate("product", "name _id")
+      .populate("user", "email");
+
+    let emitidos = 0, fallidos = 0;
+
+    for (const cert of pendientes) {
+      try {
+        const resultado = await blockchainService.issueCertificate({
+          productId: cert.product?._id?.toString() || "unknown",
+          productName: cert.productName,
+          serialNumber: cert.serialNumber,
+          ownerAddress: cert.ownerAddress,
+          metadataURI: cert.metadataURI || "",
+        });
+        cert.status = "issued";
+        cert.certificateId = resultado.certId;
+        cert.transactionHash = resultado.txHash;
+        cert.blockNumber = resultado.blockNumber;
+        cert.issuerAddress = resultado.issuerAddress;
+        cert.contractAddress = resultado.contractAddress;
+        cert.issuedAt = resultado.issuedAt;
+        cert.gasUsed = resultado.gasUsed;
+        cert.gasPriceWei = resultado.gasPriceWei;
+        cert.error = undefined;
+        await cert.save();
+        emitidos++;
+      } catch (err) {
+        cert.status = "failed";
+        cert.error = err.message;
+        await cert.save();
+        fallidos++;
+        console.error("[Certificate] reEmitir error para", cert.serialNumber, err.message);
+      }
+    }
+
+    return res.json({ ok: true, total: pendientes.length, emitidos, fallidos });
+  } catch (error) {
+    console.error("[Certificate] reEmitirPendientes:", error);
+    return res.status(500).json({ ok: false, mensaje: error.message });
+  }
+};
+
 module.exports = {
   emitirCertificado,
   obtenerCertificado,
@@ -403,4 +460,5 @@ module.exports = {
   listarTodos,
   qrCertificado,
   migrarCertificadosPedidos,
+  reEmitirPendientes,
 };

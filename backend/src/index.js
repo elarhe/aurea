@@ -10,7 +10,8 @@ const PORT = process.env.PORT || 4000;
 const API_PREFIX = process.env.API_PREFIX || "/api/v1";
 
 // Middleware global
-app.use(helmet());
+const path = require("path");
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(cors({ origin: (process.env.CORS_ORIGIN || "").split(",") }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -29,6 +30,7 @@ const userRoutes = require("./routes/users.routes");
 const employeeRoutes = require("./routes/employees.routes");
 const statsRoutes = require("./routes/stats.routes");
 const couponRoutes = require("./routes/coupons.routes");
+const uploadRoutes = require("./routes/upload.routes");
 
 app.use(`${API_PREFIX}/auth`, authRoutes);
 app.use(`${API_PREFIX}/certificates`, certificateRoutes);
@@ -41,6 +43,10 @@ app.use(`${API_PREFIX}/users`, userRoutes);
 app.use(`${API_PREFIX}/employees`, employeeRoutes);
 app.use(`${API_PREFIX}/stats`, statsRoutes);
 app.use(`${API_PREFIX}/coupons`, couponRoutes);
+app.use(`${API_PREFIX}/upload`, uploadRoutes);
+
+// Servir imágenes subidas estáticamente
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // Health check
 app.get(`${API_PREFIX}/health`, (_req, res) => {

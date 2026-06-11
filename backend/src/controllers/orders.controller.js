@@ -2,6 +2,7 @@ const Order = require("../models/Order");
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 const Certificate = require("../models/Certificate");
+const emailService = require("../services/email.service");
 const blockchainService = require("../services/blockchain.service");
 
 const generarOrderNumber = () =>
@@ -92,6 +93,23 @@ const crearPedido = async (req, res) => {
     });
 
     await pedido.save();
+
+    // Enviar email de confirmación
+    try {
+      const usuario = await require("../models/User").findById(req.usuario.id);
+      if (usuario) {
+        await emailService.confirmarPedido({
+          email: usuario.email,
+          nombre: usuario.firstName || usuario.email,
+          orderNumber: pedido.orderNumber,
+          items: pedido.items,
+          total: pedido.total,
+          direccion: pedido.shippingAddress,
+        });
+      }
+    } catch (emailErr) {
+      console.error("[Email] Error enviando confirmación:", emailErr.message);
+    }
 
     // Limpiar carrito
     await Cart.findOneAndUpdate(

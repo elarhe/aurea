@@ -72,6 +72,9 @@ const productSchema = new Schema(
     isVegan: { type: Boolean, default: false },
     isHandmade: { type: Boolean, default: false },
 
+    // Traducciones dinámicas: { en: { name, description }, fr: { name, description }, ... }
+    translations: { type: Map, of: new Schema({ name: String, description: String }, { _id: false }) },
+
     // Certificación blockchain
     certifiable: { type: Boolean, default: true },
     requiresCertificate: { type: Boolean, default: false }, // emisión obligatoria al vender

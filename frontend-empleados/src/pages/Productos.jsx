@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
-import { productosService, categoriasService } from "../services/api";
+import { productosService, categoriasService, uploadService } from "../services/api";
 
 const CATS_FALLBACK = ["Vestidos","Chaquetas","Pantalones","Tops","Abrigos","Faldas","Accesorios","Zapatos"];
 
-const VACIO = { nombre: "", categoryId: "", precio: "", compareAtPrice: "", stock: "", descripcion: "", imagen: "", certifiable: false, materiales: "", name_en: "", name_uk: "", description_en: "", description_uk: "" };
+const VACIO = { nombre: "", categoryId: "", precio: "", compareAtPrice: "", stock: "", descripcion: "", imagen: "", certifiable: false, materiales: "", traducciones: {} };
 
 const stockColor = (stock) => {
   if (stock === 0) return "text-red-600 bg-red-50";
@@ -11,7 +11,155 @@ const stockColor = (stock) => {
   return "text-green-700 bg-green-50";
 };
 
+
+const IDIOMAS = [
+  { code: "en", label: "Inglés", flag: "🇬🇧" },
+  { code: "fr", label: "Francés", flag: "🇫🇷" },
+  { code: "de", label: "Alemán", flag: "🇩🇪" },
+  { code: "it", label: "Italiano", flag: "🇮🇹" },
+  { code: "pt", label: "Portugués", flag: "🇵🇹" },
+  { code: "uk", label: "Ucraniano", flag: "🇺🇦" },
+  { code: "zh", label: "Chino", flag: "🇨🇳" },
+  { code: "ja", label: "Japonés", flag: "🇯🇵" },
+  { code: "ar", label: "Árabe", flag: "🇸🇦" },
+  { code: "ru", label: "Ruso", flag: "🇷🇺" },
+  { code: "ca", label: "Catalán", flag: "🏴" },
+];
+
+async function traducirTexto(texto, targetLang) {
+  if (!texto.trim()) return "";
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(texto)}&langpair=es|${targetLang}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  if (data.responseStatus === 200) return data.responseData.translatedText || "";
+  throw new Error("Error de traducción");
+}
+
+function TraduccionesSection({ traducciones, onChange, nombreEs, descripcionEs }) {
+  const [idiomaSeleccionado, setIdiomaSeleccionado] = useState("");
+  const [traduciendo, setTraduciendo] = useState(null); // lang code being translated
+
+  const idiomasDisponibles = IDIOMAS.filter((i) => !traducciones[i.code]);
+
+  const agregarIdioma = async () => {
+    if (!idiomaSeleccionado) return;
+    const nuevo = { ...traducciones, [idiomaSeleccionado]: { name: "", description: "" } };
+    onChange(nuevo);
+
+    // Auto-translate
+    setTraduciendo(idiomaSeleccionado);
+    try {
+      const [name, description] = await Promise.all([
+        traducirTexto(nombreEs || "", idiomaSeleccionado),
+        traducirTexto(descripcionEs || "", idiomaSeleccionado),
+      ]);
+      onChange({ ...nuevo, [idiomaSeleccionado]: { name, description } });
+    } catch (e) {
+      // Keep empty fields if translation fails
+    } finally {
+      setTraduciendo(null);
+      setIdiomaSeleccionado("");
+    }
+  };
+
+  const eliminarIdioma = (code) => {
+    const updated = { ...traducciones };
+    delete updated[code];
+    onChange(updated);
+  };
+
+  const updateField = (code, field, value) => {
+    onChange({ ...traducciones, [code]: { ...traducciones[code], [field]: value } });
+  };
+
+  return (
+    <div className="col-span-2 border-t border-stone-100 pt-3 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wide">Traducciones</p>
+        <div className="flex items-center gap-2">
+          <select
+            value={idiomaSeleccionado}
+            onChange={(e) => setIdiomaSeleccionado(e.target.value)}
+            className="border border-stone-200 rounded-lg px-2 py-1 text-xs bg-white focus:outline-none focus:border-stone-400"
+          >
+            <option value="">Añadir idioma...</option>
+            {idiomasDisponibles.map((i) => (
+              <option key={i.code} value={i.code}>{i.flag} {i.label}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={agregarIdioma}
+            disabled={!idiomaSeleccionado || !!traduciendo}
+            className="px-3 py-1 text-xs bg-stone-800 text-white rounded-lg hover:bg-stone-600 disabled:opacity-40 transition-colors"
+          >
+            {traduciendo ? "Traduciendo..." : "+ Añadir"}
+          </button>
+        </div>
+      </div>
+
+      {Object.keys(traducciones).length === 0 && (
+        <p className="text-xs text-stone-400 italic">Sin traducciones. Elige un idioma del desplegable para añadir.</p>
+      )}
+
+      {Object.entries(traducciones).map(([code, val]) => {
+        const idioma = IDIOMAS.find((i) => i.code === code) || { flag: "🌐", label: code.toUpperCase() };
+        const cargando = traduciendo === code;
+        return (
+          <div key={code} className="bg-stone-50 rounded-lg p-3 space-y-2 border border-stone-100">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-stone-600">{idioma.flag} {idioma.label}</span>
+              <button type="button" onClick={() => eliminarIdioma(code)} className="text-stone-300 hover:text-red-400 text-sm transition-colors">✕</button>
+            </div>
+            {cargando ? (
+              <div className="animate-pulse space-y-2">
+                <div className="h-7 bg-stone-200 rounded" />
+                <div className="h-12 bg-stone-200 rounded" />
+              </div>
+            ) : (
+              <>
+                <input
+                  className="w-full border border-stone-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-stone-400 bg-white"
+                  value={val.name || ""}
+                  onChange={(e) => updateField(code, "name", e.target.value)}
+                  placeholder={`Nombre en ${idioma.label.toLowerCase()}`}
+                />
+                <textarea
+                  rows={2}
+                  className="w-full border border-stone-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-stone-400 resize-none bg-white"
+                  value={val.description || ""}
+                  onChange={(e) => updateField(code, "description", e.target.value)}
+                  placeholder={`Descripción en ${idioma.label.toLowerCase()}`}
+                />
+              </>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function Modal({ titulo, form, onChange, onGuardar, onCerrar, guardando, categorias }) {
+  const [subiendo, setSubiendo] = useState(false);
+  const [errorSubida, setErrorSubida] = useState(null);
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSubiendo(true);
+    setErrorSubida(null);
+    try {
+      const res = await uploadService.imagen(file);
+      onChange("imagen", res.data.url);
+    } catch (err) {
+      setErrorSubida(err.response?.data?.mensaje || "Error al subir imagen");
+    } finally {
+      setSubiendo(false);
+      e.target.value = "";
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6 space-y-4 max-h-[90vh] overflow-y-auto">
@@ -43,9 +191,21 @@ function Modal({ titulo, form, onChange, onGuardar, onCerrar, guardando, categor
             <label className="text-xs text-stone-500 mb-1 block">Stock *</label>
             <input type="number" min="0" className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-400" value={form.stock} onChange={(e) => onChange("stock", e.target.value)} placeholder="0" />
           </div>
-          <div>
-            <label className="text-xs text-stone-500 mb-1 block">URL imagen</label>
-            <input className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-400" value={form.imagen} onChange={(e) => onChange("imagen", e.target.value)} placeholder="https://..." />
+          <div className="col-span-2">
+            <label className="text-xs text-stone-500 mb-1 block">Imagen del producto</label>
+            <div className="flex gap-2 items-start flex-wrap">
+              <label className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-medium cursor-pointer transition-colors ${subiendo ? "bg-stone-100 text-stone-400 cursor-not-allowed" : "bg-white border-stone-300 text-stone-700 hover:bg-stone-50"}`}>
+                <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} disabled={subiendo} />
+                {subiendo ? "⏳ Subiendo..." : "📎 Subir archivo"}
+              </label>
+              <input
+                className="flex-1 min-w-0 border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-400"
+                value={form.imagen}
+                onChange={(e) => onChange("imagen", e.target.value)}
+                placeholder="o pega una URL aquí..."
+              />
+            </div>
+            {errorSubida && <p className="text-xs text-red-500 mt-1">{errorSubida}</p>}
           </div>
           <div className="col-span-2">
             <label className="text-xs text-stone-500 mb-1 block">Materiales (separados por coma)</label>
@@ -55,25 +215,7 @@ function Modal({ titulo, form, onChange, onGuardar, onCerrar, guardando, categor
             <label className="text-xs text-stone-500 mb-1 block">Descripción</label>
             <textarea rows={3} className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-400 resize-none" value={form.descripcion} onChange={(e) => onChange("descripcion", e.target.value)} placeholder="Descripción del producto..." />
           </div>
-          <div className="col-span-2 border-t border-stone-100 pt-3">
-            <p className="text-xs font-semibold text-stone-400 uppercase tracking-wide mb-2">Traducciones (opcional)</p>
-          </div>
-          <div>
-            <label className="text-xs text-stone-500 mb-1 block">Nombre en inglés</label>
-            <input className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-400" value={form.name_en} onChange={(e) => onChange("name_en", e.target.value)} placeholder="Name in English" />
-          </div>
-          <div>
-            <label className="text-xs text-stone-500 mb-1 block">Nombre en ucraniano</label>
-            <input className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-400" value={form.name_uk} onChange={(e) => onChange("name_uk", e.target.value)} placeholder="Назва українською" />
-          </div>
-          <div className="col-span-2">
-            <label className="text-xs text-stone-500 mb-1 block">Descripción en inglés</label>
-            <textarea rows={2} className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-400 resize-none" value={form.description_en} onChange={(e) => onChange("description_en", e.target.value)} placeholder="Description in English..." />
-          </div>
-          <div className="col-span-2">
-            <label className="text-xs text-stone-500 mb-1 block">Descripción en ucraniano</label>
-            <textarea rows={2} className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-stone-400 resize-none" value={form.description_uk} onChange={(e) => onChange("description_uk", e.target.value)} placeholder="Опис українською..." />
-          </div>
+          <TraduccionesSection traducciones={form.traducciones || {}} onChange={(t) => onChange("traducciones", t)} nombreEs={form.nombre} descripcionEs={form.descripcion} />
           <div className="col-span-2">
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={form.certifiable} onChange={(e) => onChange("certifiable", e.target.checked)} className="w-4 h-4 rounded border-stone-300 accent-stone-800" />
@@ -110,6 +252,123 @@ function ModalEliminar({ producto, onConfirmar, onCerrar, eliminando }) {
     </div>
   );
 }
+function ModalStock({ producto, onCerrar, onGuardar }) {
+  const tieneVariantes = producto.variants && producto.variants.length > 0;
+  const [stockSimple, setStockSimple] = useState(producto.stock ?? 0);
+  const [ajustes, setAjustes] = useState(
+    tieneVariantes
+      ? producto.variants.map((v) => ({ sku: v.sku, size: v.size || "—", color: v.color || "—", stock: v.stock ?? 0 }))
+      : []
+  );
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleGuardar = async () => {
+    setGuardando(true);
+    setError(null);
+    try {
+      const id = producto._id || producto.id;
+      if (tieneVariantes) {
+        await onGuardar(id, { ajustes: ajustes.map(({ sku, stock }) => ({ sku, stock: Number(stock) })) });
+      } else {
+        await onGuardar(id, { stock: Number(stockSimple) });
+      }
+      onCerrar();
+    } catch (e) {
+      setError(e.response?.data?.mensaje || "Error al guardar stock");
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-stone-800">Gestionar stock</h3>
+            <p className="text-xs text-stone-400 mt-0.5">{producto.name || producto.nombre}</p>
+          </div>
+          <button onClick={onCerrar} className="text-stone-400 hover:text-stone-700 text-xl">✕</button>
+        </div>
+        {error && <p className="text-xs text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
+        {tieneVariantes ? (
+          <div>
+            <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-3">Variantes ({ajustes.length})</p>
+            <div className="space-y-2">
+              {ajustes.map((v, i) => (
+                <div key={v.sku} className="flex items-center gap-3 bg-stone-50 rounded-lg px-3 py-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-stone-700 truncate">
+                      {v.size !== "—" && <span className="mr-2">T: {v.size}</span>}
+                      {v.color !== "—" && <span className="text-stone-500">{v.color}</span>}
+                    </p>
+                    <p className="text-xs text-stone-400">{v.sku}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setAjustes((prev) => prev.map((a, j) => j === i ? { ...a, stock: Math.max(0, a.stock - 1) } : a))}
+                      className="w-7 h-7 rounded-md border border-stone-200 bg-white text-stone-600 hover:bg-stone-100 text-sm font-bold flex items-center justify-center">
+                      −
+                    </button>
+                    <input
+                      type="number" min="0"
+                      value={v.stock}
+                      onChange={(e) => setAjustes((prev) => prev.map((a, j) => j === i ? { ...a, stock: Math.max(0, Number(e.target.value)) } : a))}
+                      className="w-16 text-center border border-stone-200 rounded-lg py-1 text-sm font-semibold focus:outline-none focus:border-stone-400"
+                    />
+                    <button
+                      onClick={() => setAjustes((prev) => prev.map((a, j) => j === i ? { ...a, stock: a.stock + 1 } : a))}
+                      className="w-7 h-7 rounded-md border border-stone-200 bg-white text-stone-600 hover:bg-stone-100 text-sm font-bold flex items-center justify-center">
+                      +
+                    </button>
+                  </div>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${stockColor(v.stock)}`}>
+                    {v.stock === 0 ? "Agotado" : `${v.stock} uds`}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-stone-400 mt-3">
+              Stock total: <span className="font-semibold text-stone-600">{ajustes.reduce((s, v) => s + v.stock, 0)} uds</span>
+            </p>
+          </div>
+        ) : (
+          <div>
+            <p className="text-xs text-stone-500 mb-2">Este producto no tiene variantes. Edita el stock directamente:</p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setStockSimple((s) => Math.max(0, s - 1))}
+                className="w-9 h-9 rounded-lg border border-stone-200 bg-white text-stone-600 hover:bg-stone-100 text-lg font-bold flex items-center justify-center">
+                −
+              </button>
+              <input
+                type="number" min="0"
+                value={stockSimple}
+                onChange={(e) => setStockSimple(Math.max(0, Number(e.target.value)))}
+                className="w-24 text-center border border-stone-200 rounded-lg py-2 text-xl font-bold focus:outline-none focus:border-stone-400"
+              />
+              <button
+                onClick={() => setStockSimple((s) => s + 1)}
+                className="w-9 h-9 rounded-lg border border-stone-200 bg-white text-stone-600 hover:bg-stone-100 text-lg font-bold flex items-center justify-center">
+                +
+              </button>
+              <span className={`text-sm font-semibold px-3 py-1 rounded-full ${stockColor(stockSimple)}`}>
+                {stockSimple === 0 ? "Sin stock" : `${stockSimple} unidades`}
+              </span>
+            </div>
+          </div>
+        )}
+        <div className="flex justify-end gap-2 pt-2 border-t border-stone-100">
+          <button onClick={onCerrar} className="px-4 py-2 text-sm text-stone-600 border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors">Cancelar</button>
+          <button onClick={handleGuardar} disabled={guardando} className="px-4 py-2 text-sm bg-stone-900 text-white rounded-lg hover:bg-stone-700 transition-colors disabled:opacity-50">
+            {guardando ? "Guardando..." : "✓ Guardar stock"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Productos() {
   const [productos, setProductos] = useState([]);
@@ -123,6 +382,7 @@ export default function Productos() {
   const [confirmarEliminar, setConfirmarEliminar] = useState(null);
   const [guardando, setGuardando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
+  const [modalStock, setModalStock] = useState(null); // producto a gestionar stock
   const [cargando, setCargando] = useState(false);
   const [errorBanner, setErrorBanner] = useState(null);
   const [pagina, setPagina] = useState(1);
@@ -169,6 +429,15 @@ export default function Productos() {
   const abrirEditar = (p) => {
     const cat = p.category || p.categoria;
     const categoryId = typeof cat === "object" ? cat._id : cat;
+    // Build traducciones from new translations map + legacy name_en/name_uk fields
+    const traducciones = {};
+    if (p.translations && typeof p.translations === "object") {
+      Object.entries(p.translations).forEach(([lang, val]) => {
+        if (val) traducciones[lang] = { name: val.name || "", description: val.description || "" };
+      });
+    }
+    if (p.name_en && !traducciones.en) traducciones.en = { name: p.name_en || "", description: p.description_en || "" };
+    if (p.name_uk && !traducciones.uk) traducciones.uk = { name: p.name_uk || "", description: p.description_uk || "" };
     setForm({
       nombre: p.name || p.nombre || "",
       categoryId: categoryId || categorias[0]?._id || "",
@@ -179,10 +448,7 @@ export default function Productos() {
       imagen: p.coverImage || p.imagen || p.image || "",
       certifiable: p.certifiable || false,
       materiales: Array.isArray(p.materials || p.materiales) ? (p.materials || p.materiales).join(", ") : (p.materials || p.materiales || ""),
-      name_en: p.name_en || "",
-      name_uk: p.name_uk || "",
-      description_en: p.description_en || "",
-      description_uk: p.description_uk || "",
+      traducciones,
     });
     setProductoEditar(p);
     setModal("editar");
@@ -203,10 +469,7 @@ export default function Productos() {
         coverImage: form.imagen.trim() || "",
         certifiable: form.certifiable,
         materials: form.materiales ? form.materiales.split(",").map((m) => m.trim()).filter(Boolean) : [],
-        ...(form.name_en.trim() ? { name_en: form.name_en.trim() } : {}),
-        ...(form.name_uk.trim() ? { name_uk: form.name_uk.trim() } : {}),
-        ...(form.description_en.trim() ? { description_en: form.description_en.trim() } : {}),
-        ...(form.description_uk.trim() ? { description_uk: form.description_uk.trim() } : {}),
+        translations: form.traducciones || {},
       };
       if (modal === "crear") {
         const res = await productosService.crear(payload);
@@ -244,6 +507,12 @@ export default function Productos() {
     }
   };
 
+  const guardarStock = async (id, data) => {
+    const res = await productosService.actualizarStock(id, data);
+    const updated = res.data?.producto || res.data;
+    setProductos((prev) => prev.map((p) => (p._id || p.id) === id ? updated : p));
+  };
+
   const getNombreCategoria = (p) => {
     const cat = p.category || p.categoria;
     if (!cat) return "—";
@@ -256,6 +525,7 @@ export default function Productos() {
     <div className="p-8 space-y-6">
       {modal && <Modal titulo={modal === "crear" ? "Nuevo producto" : "Editar producto"} form={form} onChange={onChange} onGuardar={guardar} onCerrar={() => setModal(null)} guardando={guardando} categorias={categorias} />}
       {confirmarEliminar && <ModalEliminar producto={confirmarEliminar} onConfirmar={eliminar} onCerrar={() => setConfirmarEliminar(null)} eliminando={eliminando} />}
+      {modalStock && <ModalStock producto={modalStock} onCerrar={() => setModalStock(null)} onGuardar={guardarStock} />}
       {errorBanner && (
         <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex items-center justify-between">
           <p className="text-red-600 text-sm">{errorBanner}</p>
@@ -319,6 +589,7 @@ export default function Productos() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <button onClick={() => abrirEditar(p)} className="text-xs text-stone-600 border border-stone-200 px-2.5 py-1 rounded-md hover:bg-stone-100 transition-colors">Editar</button>
+                      <button onClick={() => setModalStock(p)} className="text-xs text-amber-700 border border-amber-200 px-2.5 py-1 rounded-md hover:bg-amber-50 transition-colors">Stock</button>
                       <button onClick={() => setConfirmarEliminar(p)} className="text-xs text-red-600 border border-red-200 px-2.5 py-1 rounded-md hover:bg-red-50 transition-colors">Eliminar</button>
                     </div>
                   </td>

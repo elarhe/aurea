@@ -173,20 +173,29 @@ const eliminar = async (req, res) => {
 // PATCH /:id/stock — ajustar stock de variantes por SKU
 const actualizarStock = async (req, res) => {
   try {
-    const { ajustes } = req.body; // [{ sku, stock }]
-    if (!Array.isArray(ajustes) || ajustes.length === 0) {
-      return res.status(400).json({ ok: false, mensaje: "Se requiere array 'ajustes' con { sku, stock }" });
-    }
+    const { ajustes, stock } = req.body;
 
     const producto = await Product.findById(req.params.id);
     if (!producto) {
       return res.status(404).json({ ok: false, mensaje: "Producto no encontrado" });
     }
 
-    for (const { sku, stock } of ajustes) {
+    // Caso 1: producto sin variantes → stock directo
+    if (typeof stock === "number" && (!producto.variants || producto.variants.length === 0)) {
+      producto.stock = Math.max(0, stock);
+      await producto.save();
+      return res.json({ ok: true, producto });
+    }
+
+    // Caso 2: variantes con SKU
+    if (!Array.isArray(ajustes) || ajustes.length === 0) {
+      return res.status(400).json({ ok: false, mensaje: "Se requiere array 'ajustes' con { sku, stock } o campo 'stock' para productos sin variantes" });
+    }
+
+    for (const { sku, stock: s } of ajustes) {
       const variante = producto.variants.find((v) => v.sku === sku);
       if (variante) {
-        variante.stock = Math.max(0, Number(stock));
+        variante.stock = Math.max(0, Number(s));
       }
     }
 

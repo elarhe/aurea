@@ -1,8 +1,9 @@
 import axios from "axios";
 
-const BASE_URL = "https://scarf-amenity-gents.ngrok-free.dev/api/v1";
 // const BASE_URL = "http://192.168.1.148:4000/api/v1"; //oficina
 // const BASE_URL = "http://192.168.1.16:4000/api/v1"; //xata
+// const BASE_URL = "http://192.168.1.117:4000/api/v1"; // casa
+const BASE_URL = "https://mixing-camcorder-expert-effectiveness.trycloudflare.com/api/v1"; // cloudflare tunnel
 
 const api = axios.create({ baseURL: BASE_URL, timeout: 10000 });
 

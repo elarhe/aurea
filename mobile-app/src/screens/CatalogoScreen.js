@@ -5,6 +5,7 @@ import {
 } from "react-native";
 import api from "../services/api";
 import { useIdioma } from "../i18n/IdiomaContext";
+import { getProductoTexto } from "../utils/producto";
 
 export default function CatalogoScreen({ navigation }) {
   const { t } = useIdioma();
@@ -83,7 +84,7 @@ export default function CatalogoScreen({ navigation }) {
   };
 
   const renderProducto = ({ item: p }) => {
-    const nombre = p.name || p.nombre;
+    const nombre = getProductoTexto(p, "name", idioma);
     const precio = p.price || p.precio || 0;
     const imagen = p.coverImage || p.imagen;
     const categoria = typeof (p.category || p.categoria) === "object"

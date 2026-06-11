@@ -157,6 +157,7 @@ export default function Certificados() {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
   const [seleccionado, setSeleccionado] = useState(null);
+  const [reEmitiendo, setReEmitiendo] = useState(false);
   const LIMITE = 20;
 
   const cargar = useCallback(async () => {
@@ -191,6 +192,20 @@ export default function Certificados() {
 
   useEffect(() => { cargar(); }, [cargar]);
 
+  const reEmitirPendientes = async () => {
+    if (!window.confirm("¿Re-emitir todos los certificados pendientes/fallidos a Sepolia? Esto puede tardar varios minutos.")) return;
+    setReEmitiendo(true);
+    try {
+      const data = await certificadosService.reEmitir();
+      alert(`Resultado: ${data.emitidos} emitidos, ${data.fallidos} fallidos de ${data.total} total.`);
+      cargar();
+    } catch (e) {
+      alert("Error: " + (e.response?.data?.mensaje || e.message));
+    } finally {
+      setReEmitiendo(false);
+    }
+  };
+
   const totalPaginas = Math.ceil(total / LIMITE);
 
   return (
@@ -206,6 +221,13 @@ export default function Certificados() {
           </h2>
           <p className="text-stone-500 text-sm mt-1">{total} certificados en total</p>
         </div>
+        <button
+          onClick={reEmitirPendientes}
+          disabled={reEmitiendo}
+          className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+        >
+          {reEmitiendo ? "Emitiendo..." : "⛓ Re-emitir pendientes a Sepolia"}
+        </button>
       </div>
 
       {/* Stats rápidas */}

@@ -37,6 +37,17 @@ export const statsService = {
   getDashboard: () => api.get("/stats/dashboard"),
 };
 
+// ─── UPLOAD ──────────────────────────────────────────────────────────
+export const uploadService = {
+  imagen: (file) => {
+    const fd = new FormData();
+    fd.append("image", file);
+    return api.post("/upload/image", fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+};
+
 // ─── PRODUCTOS ───────────────────────────────────────────────────────
 export const productosService = {
   getAll: (params) => api.get("/products", { params }),
@@ -44,6 +55,7 @@ export const productosService = {
   crear: (data) => api.post("/products", data),
   editar: (id, data) => api.put(`/products/${id}`, data),
   eliminar: (id) => api.delete(`/products/${id}`),
+  actualizarStock: (id, data) => api.patch(`/products/${id}/stock`, data),
 };
 
 // ─── PEDIDOS ─────────────────────────────────────────────────────────
@@ -59,6 +71,7 @@ export const certificadosService = {
   getAll: (params) => api.get("/certificates", { params }),
   emitir: (orderId, orderItemId) =>
     api.post("/certificates/emitir", { orderId, orderItemId }),
+  reEmitir: () => api.post("/certificates/re-emitir").then(r => r.data),
 };
 
 // ─── EMPLEADOS ───────────────────────────────────────────────────────

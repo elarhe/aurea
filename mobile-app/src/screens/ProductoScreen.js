@@ -4,6 +4,7 @@ import {
   StyleSheet, ActivityIndicator, Alert, TextInput
 } from "react-native";
 import { productosService, reseñasService } from "../services/api";
+import { getProductoTexto } from "../utils/producto";
 import { useAuth } from "../context/AuthContext";
 import { useCarrito } from "../context/CarritoContext";
 import { useIdioma } from "../i18n/IdiomaContext";
@@ -141,7 +142,7 @@ export default function ProductoScreen({ route, navigation }) {
     setAñadiendo(true);
     try {
       await añadir(producto._id || producto.id, variantSeleccionada?.sku || "default", 1);
-      Alert.alert(t.producto.añadido, `${producto.name || producto.nombre} ${t.producto.añadidoDesc}`, [
+      Alert.alert(t.producto.añadido, `${getProductoTexto(producto, "name", idioma)} ${t.producto.añadidoDesc}`, [
         { text: t.producto.verCesta, onPress: () => navigation.navigate("CarritoTab") },
         { text: t.producto.seguirComprando, style: "cancel" },
       ]);
@@ -155,9 +156,9 @@ export default function ProductoScreen({ route, navigation }) {
   if (cargando) return <View style={styles.centered}><ActivityIndicator color="#1c1c1c" /></View>;
   if (!producto) return <View style={styles.centered}><Text style={styles.errorText}>Producto no encontrado</Text></View>;
 
-  const nombre = producto.name || producto.nombre;
+  const nombre = getProductoTexto(producto, "name", idioma);
   const precio = producto.price || producto.precio || 0;
-  const descripcion = producto.description || producto.descripcion;
+  const descripcion = getProductoTexto(producto, "description", idioma);
   const imagen = producto.coverImage || producto.imagen;
   const variantes = producto.variants || [];
   const materiales = producto.materials || producto.materiales || [];

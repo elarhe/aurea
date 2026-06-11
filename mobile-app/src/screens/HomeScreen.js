@@ -6,6 +6,7 @@ import {
 import { productosService } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { useIdioma } from "../i18n/IdiomaContext";
+import { getProductoTexto } from "../utils/producto";
 
 const { height } = Dimensions.get("window");
 const HERO_IMAGE = "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1800&q=80";
@@ -101,7 +102,7 @@ export default function HomeScreen({ navigation }) {
                   <Image source={{ uri: p.coverImage }} style={styles.productoImagen} />
                 ) : (
                   <View style={[styles.productoImagen, styles.productoPlaceholder]}>
-                    <Text style={styles.placeholderText}>{(p.name || p.nombre || "?")[0]}</Text>
+                    <Text style={styles.placeholderText}>{getProductoTexto(p, "name", idioma)[0] || "?"}</Text>
                   </View>
                 )}
                 <Text style={styles.productoCategoria}>
@@ -112,7 +113,7 @@ export default function HomeScreen({ navigation }) {
                     return { mujer: t.home.mujer, hombre: t.home.hombre, accesorios: t.home.accesorios }[cat?.toLowerCase()] || cat;
                   })()}
                 </Text>
-                <Text style={styles.productoNombre} numberOfLines={2}>{p.name || p.nombre}</Text>
+                <Text style={styles.productoNombre} numberOfLines={2}>{getProductoTexto(p, "name", idioma)}</Text>
                 <Text style={styles.productoPrecio}>
                   {(p.price || p.precio || 0).toLocaleString("es-ES", { style: "currency", currency: "EUR" })}
                 </Text>
