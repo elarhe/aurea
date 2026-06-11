@@ -31,7 +31,7 @@ const statusLabels = {
 };
 
 export default function MisPedidos() {
-  const { cliente } = useAuth();
+  const { cliente, cargando } = useAuth();
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,16 +39,14 @@ export default function MisPedidos() {
   const [expandido, setExpandido] = useState(null);
 
   useEffect(() => {
-    if (!cliente) {
-      navigate("/");
-      return;
-    }
+    if (cargando) return;
+    if (!cliente) { navigate("/"); return; }
     pedidosService
       .getMios()
-      .then((data) => setPedidos(data.orders || data || []))
+      .then((data) => setPedidos(data.pedidos || data.orders || []))
       .catch(() => setError("No se pudieron cargar tus pedidos."))
       .finally(() => setLoading(false));
-  }, [cliente, navigate]);
+  }, [cliente, cargando, navigate]);
 
   const toggleExpandir = (id) => setExpandido((prev) => (prev === id ? null : id));
 

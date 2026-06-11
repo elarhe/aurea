@@ -6,12 +6,16 @@ const {
   verificarCertificado,
   listarCertificadosUsuario,
   listarTodos,
+  qrCertificado,
+  migrarCertificadosPedidos,
 } = require("../controllers/certificate.controller");
 const { proteger, soloAdmin } = require("../middleware/auth.middleware");
 
 // ── Rutas públicas (sin autenticación) ──────────────────────────────────────
 // Verificación pública por slug o serial number
 router.get("/verificar/:slug", verificarCertificado);
+// QR de verificación pública (devuelve PNG)
+router.get("/qr/:slug", qrCertificado);
 
 // ── Rutas de cliente autenticado ────────────────────────────────────────────
 router.get("/mis-certificados", proteger, listarCertificadosUsuario);
@@ -20,5 +24,6 @@ router.get("/:id", proteger, obtenerCertificado);
 // ── Rutas de empleado (admin/manager) ───────────────────────────────────────
 router.get("/", proteger, soloAdmin, listarTodos);
 router.post("/emitir", proteger, soloAdmin, emitirCertificado);
+router.post("/migrar", proteger, soloAdmin, migrarCertificadosPedidos);
 
 module.exports = router;

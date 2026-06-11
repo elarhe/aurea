@@ -27,9 +27,9 @@ api.interceptors.response.use(
 // ── Auth ──────────────────────────────────────────────────────────────────────
 export const authService = {
   loginCliente: (email, password) =>
-    api.post("/auth/login", { email, password }).then((r) => r.data),
+    api.post("/auth/clientes/login", { email, password }).then((r) => r.data),
   registroCliente: ({ firstName, lastName, email, password }) =>
-    api.post("/auth/register", { firstName, lastName, email, password }).then((r) => r.data),
+    api.post("/auth/clientes/registro", { firstName, lastName, email, password }).then((r) => r.data),
   me: () => api.get("/auth/me").then((r) => r.data),
 };
 
@@ -59,22 +59,24 @@ export const carritoService = {
 // ── Pedidos ───────────────────────────────────────────────────────────────────
 export const pedidosService = {
   crear: (data) => api.post("/orders", data).then((r) => r.data),
-  getMios: () => api.get("/orders/my").then((r) => r.data),
-  getMio: (id) => api.get(`/orders/my/${id}`).then((r) => r.data),
+  getMios: () => api.get("/orders/mis-pedidos").then((r) => r.data),
+  getMio: (id) => api.get(`/orders/mis-pedidos/${id}`).then((r) => r.data),
 };
 
 // ── Certificados ──────────────────────────────────────────────────────────────
 export const certificadosService = {
-  getMios: () => api.get("/certificates/my").then((r) => r.data),
-  verificar: (slug) => api.get(`/certificates/verify/${slug}`).then((r) => r.data),
+  getMios: () => api.get("/certificates/mis-certificados").then((r) => r.data),
+  verificar: (slug) => api.get(`/certificates/verificar/${slug}`).then((r) => r.data),
 };
 
 // ── Reseñas ───────────────────────────────────────────────────────────────────
 export const reseñasService = {
   listar: (productId, page = 1) =>
-    api.get(`/reviews/${productId}/reviews`, { params: { page, limit: 10 } }),
-  crear: (productId, rating, title, comment) =>
-    api.post("/reviews", { productId, rating, title, comment }),
+    api.get(`/reviews/${productId}/reviews`, { params: { page, limit: 10 } }).then((r) => r.data),
+  getByProducto: (productId, page = 1) =>
+    api.get(`/reviews/${productId}/reviews`, { params: { page, limit: 10 } }).then((r) => r.data),
+  crear: (productId, { rating, title, comment, sizeFeedback, qualityRating, valueRating, images } = {}) =>
+    api.post("/reviews", { productId, rating, title, comment, sizeFeedback, qualityRating, valueRating, images }).then((r) => r.data),
 };
 
 // ── Usuarios ──────────────────────────────────────────────────────────────────

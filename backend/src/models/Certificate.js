@@ -8,7 +8,7 @@ const { Schema } = mongoose;
 const certificateSchema = new Schema(
   {
     // Identificadores
-    certificateId: { type: Number, required: true, unique: true, index: true }, // id devuelto por el contrato
+    certificateId: { type: Number, default: null }, // id devuelto por el contrato (null si blockchain desactivado)
     serialNumber: { type: String, required: true, unique: true, trim: true, index: true },
 
     // Relaciones
@@ -27,10 +27,10 @@ const certificateSchema = new Schema(
 
     // Datos on-chain
     network: { type: String, default: "sepolia" },
-    contractAddress: { type: String, required: true },
-    transactionHash: { type: String, required: true, index: true },
+    contractAddress: { type: String, default: "" },
+    transactionHash: { type: String, index: true, sparse: true, default: null },
     blockNumber: { type: Number },
-    issuerAddress: { type: String, required: true },
+    issuerAddress: { type: String, default: "" },
     ownerAddress: { type: String, required: true }, // wallet o hash representativo
     metadataURI: { type: String, trim: true }, // ipfs://...
 

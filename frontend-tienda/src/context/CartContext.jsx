@@ -31,7 +31,7 @@ export function CartProvider({ children }) {
     if (!cliente) return;
     try {
       const data = await carritoService.get();
-      setCarrito(data.cart || data);
+      setCarrito(data.carrito || data.cart || data);
     } catch (e) {
       console.error("Error cargando carrito:", e);
     }
@@ -73,7 +73,7 @@ export function CartProvider({ children }) {
     if (cliente) {
       try {
         const data = await carritoService.agregar({ productId, variantSku, quantity });
-        setCarrito(data.cart || data);
+        setCarrito(data.carrito || data.cart || data);
         setDrawerOpen(true);
       } catch (e) {
         console.error("Error añadiendo al carrito:", e);
@@ -101,7 +101,7 @@ export function CartProvider({ children }) {
     if (!cliente) return;
     try {
       const data = await carritoService.actualizar(itemId, quantity);
-      setCarrito(data.cart || data);
+      setCarrito(data.carrito || data.cart || data);
     } catch (e) {
       console.error("Error actualizando item:", e);
       throw e;
@@ -118,7 +118,7 @@ export function CartProvider({ children }) {
     }
     try {
       const data = await carritoService.eliminar(itemId);
-      setCarrito(data.cart || data);
+      setCarrito(data.carrito || data.cart || data);
     } catch (e) {
       console.error("Error eliminando item:", e);
       throw e;
@@ -144,7 +144,7 @@ export function CartProvider({ children }) {
     if (!cliente) return;
     try {
       const data = await carritoService.aplicarCupon(code);
-      setCarrito(data.cart || data);
+      setCarrito(data.carrito || data.cart || data);
     } catch (e) {
       console.error("Error aplicando cupón:", e);
       throw e;

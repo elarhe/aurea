@@ -199,4 +199,27 @@ const actualizarStock = async (req, res) => {
   }
 };
 
-module.exports = { listar, obtener, crear, actualizar, eliminar, actualizarStock };
+
+// GET /autocompletar?q= — sugerencias rapidas para barra de busqueda
+const autocompletar = async (req, res) => {
+  try {
+    const { q, limit = 8 } = req.query;
+    if (!q || q.trim().length < 2) {
+      return res.json({ ok: true, sugerencias: [] });
+    }
+    const limitNum = Math.min(20, Math.max(1, parseInt(limit)));
+    const productos = await Product.find({
+      isActive: true,
+      name: { $regex: q.trim(), $options: "i" },
+    })
+      .select("name slug price coverImage rating stock")
+      .limit(limitNum)
+      .lean();
+    return res.json({ ok: true, sugerencias: productos });
+  } catch (error) {
+    console.error("[products.autocompletar]", error);
+    return res.status(500).json({ ok: false, mensaje: "Error interno" });
+  }
+};
+
+module.exports = { listar, obtener, crear, actualizar, eliminar, actualizarStock, autocompletar };

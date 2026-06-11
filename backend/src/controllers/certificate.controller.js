@@ -10,6 +10,7 @@ const Certificate = require("../models/Certificate");
 const Order = require("../models/Order");
 const blockchainService = require("../services/blockchain.service");
 const { customAlphabet } = require("nanoid");
+const QRCode = require("qrcode");
 
 // Generador de slug público corto (8 chars, solo letras y números)
 const nanoid = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 8);
@@ -247,10 +248,10 @@ const verificarCertificado = async (req, res) => {
  */
 const listarCertificadosUsuario = async (req, res) => {
   try {
-    const certs = await Certificate.find({ user: req.usuario.id, status: "issued" })
+    const certs = await Certificate.find({ user: req.usuario.id, status: { $in: ["issued", "pending", "failed"] } })
       .populate("product", "name images coverImage brand")
       .populate("order", "orderNumber createdAt total")
-      .sort({ issuedAt: -1 });
+      .sort({ createdAt: -1 });
 
     res.json({ ok: true, total: certs.length, certificados: certs });
   } catch (error) {
@@ -298,10 +299,108 @@ const listarTodos = async (req, res) => {
   }
 };
 
+
+// ─── QR de verificación pública ──────────────────────────────────────────────
+
+/**
+ * GET /api/v1/certificates/qr/:slug
+ * Público. Devuelve un PNG con el QR que apunta a la URL de verificación.
+ */
+const qrCertificado = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    const cert = await Certificate.findOne({
+      $or: [{ publicSlug: slug }, { serialNumber: slug }],
+    }).lean();
+
+    if (!cert) {
+      return res.status(404).json({ ok: false, mensaje: "Certificado no encontrado" });
+    }
+
+    // URL pública de verificación — ajustar al dominio real en producción
+    const baseUrl = process.env.PUBLIC_URL || "http://localhost:3000";
+    const verificationUrl = `${baseUrl}/api/v1/certificates/verificar/${cert.publicSlug}`;
+
+    const qrBuffer = await QRCode.toBuffer(verificationUrl, {
+      type: "png",
+      width: 300,
+      margin: 2,
+      color: { dark: "#1c1c1c", light: "#faf9f7" },
+    });
+
+    res.setHeader("Content-Type", "image/png");
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    return res.send(qrBuffer);
+  } catch (error) {
+    console.error("[Certificate] Error qrCertificado:", error);
+    res.status(500).json({ ok: false, mensaje: "Error interno del servidor" });
+  }
+};
+
+
+// ─── Migración: crear certs para pedidos existentes ──────────────────────────
+const migrarCertificadosPedidos = async (req, res) => {
+  try {
+    // Eliminar índice único antiguo si existe
+    try {
+      await Certificate.collection.dropIndex("certificateId_1");
+    } catch (_) { /* ya no existe */ }
+
+    const Order   = require("../models/Order");
+    const Product = require("../models/Product");
+    const ESTADOS = ["paid", "processing", "shipped", "delivered"];
+
+    const pedidos = await Order.find({ status: { $in: ESTADOS } })
+      .populate("items.product")
+      .populate("user", "email");
+
+    let creados = 0, omitidos = 0;
+
+    for (const pedido of pedidos) {
+      for (const item of pedido.items) {
+        if (item.certificate) { omitidos++; continue; }
+        const producto = item.product;
+        if (!producto || producto.certifiable === false) { omitidos++; continue; }
+
+        const serialNumber = `AUREA-${new Date().getFullYear()}-${Math.random().toString(36).substring(2,10).toUpperCase()}`;
+        const publicSlug   = serialNumber.toLowerCase().replace(/[^a-z0-9]/g, "-");
+        const ownerAddress = blockchainService.constructor.emailToAddress
+          ? blockchainService.constructor.emailToAddress(pedido.user?.email || "default@aurea.com")
+          : pedido.user?.email || "default@aurea.com";
+
+        const cert = await Certificate.create({
+          serialNumber, publicSlug, ownerAddress,
+          product:     producto._id,
+          productName: item.productName || producto.name,
+          order:       pedido._id,
+          user:        pedido.user._id || pedido.user,
+          productSnapshot: { brand: producto.brand, materials: producto.materials },
+          network: process.env.BLOCKCHAIN_NETWORK || "sepolia",
+          status: "pending",
+        });
+
+        await Order.updateOne(
+          { _id: pedido._id, "items._id": item._id },
+          { $set: { "items.$.certificate": cert._id } }
+        );
+        creados++;
+      }
+    }
+
+    return res.json({ ok: true, creados, omitidos });
+  } catch (error) {
+    console.error("[Certificate] migrarCertificadosPedidos:", error);
+    return res.status(500).json({ ok: false, mensaje: error.message });
+  }
+};
+
 module.exports = {
   emitirCertificado,
   obtenerCertificado,
   verificarCertificado,
   listarCertificadosUsuario,
   listarTodos,
+  qrCertificado,
+  migrarCertificadosPedidos,
 };

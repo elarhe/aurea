@@ -11,13 +11,13 @@ const TABS = [
 ];
 
 export default function MiPerfil() {
-  const { cliente, login, token } = useAuth();
+  const { cliente, cargando, login, token } = useAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState("datos");
 
   useEffect(() => {
     if (!cliente) navigate("/");
-  }, [cliente, navigate]);
+  }, [cliente, cargando, navigate]);
 
   if (!cliente) return null;
 

@@ -55,8 +55,9 @@ export const pedidosService = {
 
 // ── Certificados ─────────────────────────────────────────────────
 export const certificadosService = {
-  getMios: () => api.get("/certificates/my"),
-  verificar: (slug) => api.get(`/certificates/verify/${slug}`),
+  getMios: () => api.get("/certificates/mis-certificados"),
+  verificar: (slug) => api.get(`/certificates/verificar/${slug}`),
+  detalle: (id) => api.get(`/certificates/${id}`),
 };
 
 // ── Reseñas ───────────────────────────────────────────────────────

@@ -10,6 +10,7 @@ import PerfilScreen from "../screens/PerfilScreen";
 import CarritoScreen from "../screens/CarritoScreen";
 import PedidosScreen from "../screens/PedidosScreen";
 import ConfiguracionScreen from "../screens/ConfiguracionScreen";
+import CertificadosScreen from "../screens/CertificadosScreen";
 import { useAuth } from "../context/AuthContext";
 import { useCarrito } from "../context/CarritoContext";
 import { useIdioma } from "../i18n/IdiomaContext";
@@ -71,6 +72,7 @@ function PerfilStack() {
     <Stack.Navigator screenOptions={HEADER_OPTS}>
       <Stack.Screen name="MiCuenta" component={PerfilScreen} options={{ title: t.perfil.miCuenta }} />
       <Stack.Screen name="Pedidos" component={PedidosScreen} options={{ title: t.pedidos.titulo }} />
+      <Stack.Screen name="Certificados" component={CertificadosScreen} options={{ title: "Mis certificados" }} />
       <Stack.Screen name="Configuracion" component={ConfiguracionScreen} options={{ title: t.config.titulo }} />
     </Stack.Navigator>
   );

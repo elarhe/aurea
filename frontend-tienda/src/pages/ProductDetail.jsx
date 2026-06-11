@@ -36,7 +36,7 @@ export default function ProductDetail() {
     productosService
       .getBySlug(slug)
       .then((data) => {
-        const p = data.product || data;
+        const p = data.producto || data.product || data;
         setProduct(p);
         // Pre-seleccionar primera talla disponible
         const tallas = p.sizes || p.variants?.map((v) => v.size).filter(Boolean) || [];
@@ -54,7 +54,7 @@ export default function ProductDetail() {
     setReseñasLoading(true);
     reseñasService
       .getByProducto(productId)
-      .then((data) => setReseñas(data.reviews || data || []))
+      .then((data) => setReseñas(data.reviews || []))
       .catch(() => {})
       .finally(() => setReseñasLoading(false));
   }, [product]);
@@ -76,14 +76,16 @@ export default function ProductDetail() {
     setAddingToCart(true);
     setCartError(null);
     try {
-      const variantSku = size || product.variants?.[0]?.sku || product.sku || "default";
+      // Buscar el variant cuyo size coincide con la talla seleccionada
+      const selectedVariant = product.variants?.find((v) => v.size === size) || product.variants?.[0];
+      const variantSku = selectedVariant?.sku || product.sku || "default";
       await agregarItem(product._id, variantSku, 1, {
         name: product.name,
         price: product.price,
         image: product.coverImage,
       });
     } catch (e) {
-      setCartError(e.response?.data?.message || "No se pudo añadir al carrito.");
+      setCartError(e.response?.data?.mensaje || e.response?.data?.message || "No se pudo añadir al carrito.");
     } finally {
       setAddingToCart(false);
     }
@@ -145,7 +147,9 @@ export default function ProductDetail() {
     );
   }
 
-  const tallas = product.sizes || product.variants?.map((v) => v.size).filter(Boolean) || ["XS", "S", "M", "L", "XL"];
+  const tallas = product.variants?.length > 0
+    ? [...new Set(product.variants.map((v) => v.size).filter(Boolean))]
+    : (product.sizes || ["XS", "S", "M", "L", "XL"]);
   const avgRating = reseñas.length > 0
     ? (reseñas.reduce((s, r) => s + (r.rating || 0), 0) / reseñas.length).toFixed(1)
     : null;
@@ -160,8 +164,8 @@ export default function ProductDetail() {
         {product.category && (
           <>
             {" · "}
-            <Link to={`/tienda/${product.category}`} className="hover:text-ink capitalize">
-              {product.category}
+            <Link to={`/tienda/${product.category?.slug || product.category}`} className="hover:text-ink capitalize">
+              {product.category?.name || product.category}
             </Link>
           </>
         )}
@@ -277,7 +281,7 @@ export default function ProductDetail() {
           <details className="mt-6 border-t border-stone-200 pt-4">
             <summary className="cursor-pointer text-xs uppercase tracking-widest">Composición y cuidados</summary>
             <p className="text-sm text-stone-600 mt-3">
-              {product.materials || "100% materiales naturales. Lavar a mano en agua fría. Planchar a baja temperatura."}
+              {Array.isArray(product.materials) ? product.materials.join(", ") : (product.materials || "100% materiales naturales. Lavar a mano en agua fría. Planchar a baja temperatura.")}
             </p>
           </details>
           <details className="mt-2 border-t border-stone-200 pt-4">

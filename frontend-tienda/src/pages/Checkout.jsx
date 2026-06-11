@@ -70,9 +70,9 @@ export default function Checkout() {
     try {
       const data = await pedidosService.crear({
         shippingAddress: form,
-        paymentMethod: "manual",
+        paymentProvider: "manual",
       });
-      const pedido = data.order || data;
+      const pedido = data.pedido || data.order || data;
       setPedidoCreado(pedido);
       await vaciarCarrito().catch(() => {});
       setStep(2);

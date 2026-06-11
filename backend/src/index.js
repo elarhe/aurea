@@ -15,6 +15,7 @@ app.use(cors({ origin: (process.env.CORS_ORIGIN || "").split(",") }));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
+app.set("etag", false); // evitar 304 en desarrollo
 
 // Rutas
 const authRoutes = require("./routes/auth.routes");

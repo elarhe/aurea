@@ -15,6 +15,30 @@ import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
 import { CartProvider } from "./context/CartContext.jsx";
 import { useState } from "react";
 
+import { Component } from "react";
+
+class ErrorBoundary extends Component {
+  state = { error: null };
+  static getDerivedStateFromError(error) { return { error }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: 40, fontFamily: "monospace", background: "#fff1f0", minHeight: "100vh" }}>
+          <h2 style={{ color: "#b91c1c" }}>Error al renderizar</h2>
+          <pre style={{ whiteSpace: "pre-wrap", color: "#7f1d1d", fontSize: 13 }}>
+            {this.state.error.message}\n\n{this.state.error.stack}
+          </pre>
+          <button onClick={() => this.setState({ error: null })} style={{ marginTop: 16, padding: "8px 16px" }}>
+            Reintentar
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+
 function AppInner() {
   const [authModal, setAuthModal] = useState(null);
   const { login } = useAuth();
@@ -60,9 +84,11 @@ function AppInner() {
 export default function App() {
   return (
     <AuthProvider>
+      <ErrorBoundary>
       <CartProvider>
         <AppInner />
       </CartProvider>
+      </ErrorBoundary>
     </AuthProvider>
   );
 }

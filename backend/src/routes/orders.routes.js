@@ -6,6 +6,7 @@ const ctrl = require("../controllers/orders.controller");
 router.post("/", proteger, ctrl.crearPedido);
 router.get("/mis-pedidos", proteger, ctrl.listarMisPedidos);
 router.get("/mis-pedidos/:id", proteger, ctrl.obtenerMiPedido);
+router.get("/export", proteger, soloAdmin, ctrl.exportarCSV);
 router.get("/", proteger, soloAdmin, ctrl.listarTodos);
 router.get("/:id", proteger, soloAdmin, ctrl.obtenerPedido);
 router.patch("/:id/status", proteger, soloAdmin, ctrl.cambiarEstado);

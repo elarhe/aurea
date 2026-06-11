@@ -3,6 +3,7 @@ const router = express.Router();
 const { proteger, soloAdmin } = require("../middleware/auth.middleware");
 const ctrl = require("../controllers/products.controller");
 
+router.get("/autocompletar", ctrl.autocompletar);
 router.get("/", ctrl.listar);
 router.get("/:slug", ctrl.obtener);
 router.post("/", proteger, soloAdmin, ctrl.crear);

@@ -14,23 +14,21 @@ function truncateHash(hash, chars = 8) {
 }
 
 export default function MisCertificados() {
-  const { cliente } = useAuth();
+  const { cliente, cargando } = useAuth();
   const navigate = useNavigate();
   const [certificados, setCertificados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!cliente) {
-      navigate("/");
-      return;
-    }
+    if (cargando) return;
+    if (!cliente) { navigate("/"); return; }
     certificadosService
       .getMios()
-      .then((data) => setCertificados(data.certificates || data || []))
+      .then((data) => setCertificados(data.certificados || data.certificates || []))
       .catch(() => setError("No se pudieron cargar tus certificados."))
       .finally(() => setLoading(false));
-  }, [cliente, navigate]);
+  }, [cliente, cargando, navigate]);
 
   return (
     <div className="container-aurea py-16">

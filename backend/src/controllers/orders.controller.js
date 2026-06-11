@@ -109,64 +109,74 @@ const crearPedido = async (req, res) => {
 
       // Emitir certificados blockchain para items certificables
       const ownerAddress = req.body.walletAddress ||
-        blockchainService.constructor.emailToAddress
+        (blockchainService.constructor.emailToAddress
           ? blockchainService.constructor.emailToAddress(req.usuario.email)
-          : blockchainService.emailToAddress
-          ? blockchainService.emailToAddress(req.usuario.email)
-          : req.usuario.email;
+          : req.usuario.email);
+
+      const blockchainEnabled = process.env.BLOCKCHAIN_ENABLED === "true";
 
       let certificadosEmitidos = 0;
       for (const item of pedido.items) {
         const producto = await Product.findById(item.product);
         if (!producto || !producto.certifiable) continue;
 
-        try {
-          const serialNumber = generarSerialNumber();
-          const resultado = await blockchainService.issueCertificate({
-            productId: item.product.toString(),
-            productName: item.productName,
-            serialNumber,
-            ownerAddress: typeof ownerAddress === "string" ? ownerAddress : ownerAddress,
-            metadataURI: "",
-          });
+        const serialNumber = generarSerialNumber();
+        const publicSlug = serialNumber.toLowerCase().replace(/[^a-z0-9]/g, "-");
 
-          const cert = new Certificate({
-            certificateId: resultado.certId,
-            serialNumber,
-            product: item.product,
-            productName: item.productName,
-            order: pedido._id,
-            user: req.usuario.id,
-            productSnapshot: {
-              brand: producto.brand,
-              materials: producto.materials,
-              countryOfOrigin: producto.countryOfOrigin,
-              images: producto.images,
-            },
-            network: resultado.network,
-            contractAddress: resultado.contractAddress,
-            transactionHash: resultado.txHash,
-            blockNumber: resultado.blockNumber,
-            issuerAddress: resultado.issuerAddress,
-            ownerAddress: typeof ownerAddress === "string" ? ownerAddress : ownerAddress,
-            status: "issued",
-            issuedAt: resultado.issuedAt,
-            gasUsed: resultado.gasUsed,
-            gasPriceWei: resultado.gasPriceWei,
-          });
+        // Crear certificado en MongoDB antes de intentar blockchain
+        // Así siempre queda registro aunque la blockchain falle o esté desactivada
+        const cert = new Certificate({
+          serialNumber,
+          product: item.product,
+          productName: item.productName,
+          order: pedido._id,
+          user: req.usuario.id,
+          productSnapshot: {
+            brand: producto.brand,
+            materials: producto.materials,
+            countryOfOrigin: producto.countryOfOrigin,
+            images: producto.images,
+          },
+          network: process.env.BLOCKCHAIN_NETWORK || "sepolia",
+          ownerAddress: typeof ownerAddress === "string" ? ownerAddress : ownerAddress,
+          status: "pending",
+          publicSlug,
+        });
+        await cert.save();
 
-          await cert.save();
+        // Enlazar certificado al item del pedido
+        await Order.updateOne(
+          { _id: pedido._id, "items._id": item._id },
+          { $set: { "items.$.certificate": cert._id } }
+        );
+        certificadosEmitidos++;
 
-          // Enlazar certificado al item del pedido
-          await Order.updateOne(
-            { _id: pedido._id, "items._id": item._id },
-            { $set: { "items.$.certificate": cert._id } }
-          );
-
-          certificadosEmitidos++;
-        } catch (blockchainError) {
-          console.error("[orders.crearPedido] Error emitiendo certificado blockchain:", blockchainError);
-          // No interrumpir el flujo del pedido
+        // Intentar emisión en blockchain solo si está habilitada
+        if (blockchainEnabled) {
+          try {
+            const resultado = await blockchainService.issueCertificate({
+              productId: item.product.toString(),
+              productName: item.productName,
+              serialNumber,
+              ownerAddress: typeof ownerAddress === "string" ? ownerAddress : ownerAddress,
+              metadataURI: "",
+            });
+            cert.certificateId = resultado.certId;
+            cert.contractAddress = resultado.contractAddress;
+            cert.transactionHash = resultado.txHash;
+            cert.blockNumber = resultado.blockNumber;
+            cert.issuerAddress = resultado.issuerAddress;
+            cert.status = "issued";
+            cert.issuedAt = resultado.issuedAt;
+            cert.gasUsed = resultado.gasUsed;
+            cert.gasPriceWei = resultado.gasPriceWei;
+            await cert.save();
+          } catch (blockchainError) {
+            console.error("[orders.crearPedido] Error blockchain:", blockchainError.message);
+            cert.status = "failed";
+            cert.error = blockchainError.message;
+            await cert.save();
+          }
         }
       }
 
@@ -356,6 +366,55 @@ const asignarEmpleado = async (req, res) => {
   }
 };
 
+
+// GET /export — exportar pedidos a CSV (admin)
+const exportarCSV = async (req, res) => {
+  try {
+    const { status, dateFrom, dateTo } = req.query;
+    const filtro = {};
+    if (status) filtro.status = status;
+    if (dateFrom || dateTo) {
+      filtro.createdAt = {};
+      if (dateFrom) filtro.createdAt.$gte = new Date(dateFrom);
+      if (dateTo) filtro.createdAt.$lte = new Date(dateTo);
+    }
+    const pedidos = await Order.find(filtro)
+      .sort({ createdAt: -1 })
+      .populate("user", "firstName lastName email")
+      .lean();
+
+    const esc = (v) => {
+      if (v == null) return "";
+      const s = String(v).replace(/"/g, '""');
+      return (s.includes(",") || s.includes("\n") || s.includes('"')) ? `"${s}"` : s;
+    };
+
+    const headers = ["orderNumber","fecha","cliente","email","subtotal","descuento","envio","total","moneda","estado","pago","transaccionId","cupon","productos","unidades","canal"];
+    const rows = pedidos.map((p) => [
+      p.orderNumber,
+      new Date(p.createdAt).toISOString().split("T")[0],
+      p.user ? `${p.user.firstName} ${p.user.lastName}` : "",
+      p.user ? p.user.email : "",
+      p.subtotal, p.discount || 0, p.shippingCost || 0, p.total,
+      p.currency || "EUR", p.status,
+      p.payment ? p.payment.provider : "",
+      p.payment ? (p.payment.transactionId || "") : "",
+      p.couponCode || "",
+      p.items ? p.items.map((i) => i.productName).join(" | ") : "",
+      p.items ? p.items.reduce((acc, i) => acc + i.quantity, 0) : 0,
+      p.sourceChannel || "web",
+    ]);
+    const csv = [headers.join(","), ...rows.map((r) => r.map(esc).join(","))].join("\n");
+    const filename = `aurea-pedidos-${new Date().toISOString().split("T")[0]}.csv`;
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    return res.send("﻿" + csv);
+  } catch (error) {
+    console.error("[orders.exportarCSV]", error);
+    return res.status(500).json({ ok: false, mensaje: "Error interno" });
+  }
+};
+
 module.exports = {
   crearPedido,
   listarMisPedidos,
@@ -364,4 +423,5 @@ module.exports = {
   obtenerPedido,
   cambiarEstado,
   asignarEmpleado,
+  exportarCSV,
 };

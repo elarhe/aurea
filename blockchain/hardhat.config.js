@@ -1,5 +1,5 @@
 require("@nomicfoundation/hardhat-toolbox");
-require("dotenv").config();
+require("dotenv").config({ path: require("path").join(__dirname, ".env") });
 
 const { BLOCKCHAIN_RPC_URL, BLOCKCHAIN_PRIVATE_KEY, ETHERSCAN_API_KEY } = process.env;
 

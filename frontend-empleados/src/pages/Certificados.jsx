@@ -98,7 +98,7 @@ function ModalDetalle({ cert, onCerrar }) {
           </div>
           <div>
             <p className="text-xs text-stone-400 mb-0.5">Cliente</p>
-            <p className="text-stone-700">{cert.customer?.nombre || cert.customer?.name || cert.cliente || "—"}</p>
+            <p className="text-stone-700">{cert.user ? ([cert.user.firstName, cert.user.lastName].filter(Boolean).join(' ') || cert.user.email) : (cert.customer?.nombre || cert.customer?.name || cert.cliente || '—')}</p>
           </div>
           <div>
             <p className="text-xs text-stone-400 mb-0.5">Red blockchain</p>
@@ -308,7 +308,7 @@ export default function Certificados() {
                         <p className="font-medium text-stone-800 text-xs">{c.product?.name || c.producto || "—"}</p>
                       </td>
                       <td className="px-4 py-3">
-                        <p className="text-stone-600 text-xs">{c.customer?.nombre || c.customer?.name || c.cliente || "—"}</p>
+                        <p className="text-stone-600 text-xs">{c.user ? ([c.user.firstName, c.user.lastName].filter(Boolean).join(' ') || c.user.email) : (c.customer?.nombre || c.customer?.name || c.cliente || '—')}</p>
                       </td>
                       <td className="px-4 py-3">
                         <span className="font-mono text-xs text-stone-500">{c.serialNumber || "—"}</span>
@@ -317,7 +317,7 @@ export default function Certificados() {
                         {fecha ? new Date(fecha).toLocaleDateString("es-ES") : "—"}
                       </td>
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                        <EtherscanLink txHash={c.txHash} network={c.network || "sepolia"} />
+                        <EtherscanLink txHash={c.transactionHash || c.txHash} network={c.network || "sepolia"} />
                       </td>
                       <td className="px-4 py-3">
                         <BadgeEstado status={c.status} />
