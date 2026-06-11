@@ -62,7 +62,7 @@ export default function ProductoScreen({ route, navigation }) {
   const { slug, producto: productoInicial } = route.params;
   const { cliente } = useAuth();
   const { añadir } = useCarrito();
-  const { t } = useIdioma();
+  const { t, idioma } = useIdioma();
 
   const [producto, setProducto] = useState(productoInicial || null);
   const [cargando, setCargando] = useState(true);

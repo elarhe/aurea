@@ -8,7 +8,7 @@ import { useIdioma } from "../i18n/IdiomaContext";
 import { getProductoTexto } from "../utils/producto";
 
 export default function CatalogoScreen({ navigation }) {
-  const { t } = useIdioma();
+  const { t, idioma } = useIdioma();
   const [productos, setProductos] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [tabActivo, setTabActivo] = useState("");
