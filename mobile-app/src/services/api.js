@@ -1,10 +1,10 @@
 import axios from "axios";
 
 // const BASE_URL = "http://192.168.1.148:4000/api/v1"; //oficina
-// const BASE_URL = "http://192.168.1.16:4000/api/v1"; //xata
+const BASE_URL = "http://192.168.1.17:4000/api/v1"; //xata
 // const BASE_URL = "http://192.168.1.117:4000/api/v1"; // casa
 // const BASE_URL = "https://mixing-camcorder-expert-effectiveness.trycloudflare.com/api/v1"; // cloudflare tunnel
-const BASE_URL = "http://172.20.10.13:4000/api/v1"; // casa
+// const BASE_URL = "http://172.20.10.13:4000/api/v1"; // casa
 
 const api = axios.create({ baseURL: BASE_URL, timeout: 10000 });
 
